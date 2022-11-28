@@ -1,0 +1,28 @@
+{
+    "GameSequences": [
+        {
+            "stringGameSequenceType": "Start",
+            "FullSequenceSeconds": 1
+        },
+        {
+            "stringGameSequenceType": "FirstSelect",
+            "FullSequenceSeconds": 60
+        },
+        {
+            "stringGameSequenceType": "OpenNonSelected",
+            "FullSequenceSeconds": 60
+        },
+        {
+            "stringGameSequenceType": "Ban",
+            "FullSequenceSeconds": 60
+        },
+        {
+            "stringGameSequenceType": "SecondSelect",
+            "FullSequenceSeconds": 60
+        },
+        {
+            "stringGameSequenceType": "Result",
+            "FullSequenceSeconds": 100
+        }
+    ]
+}

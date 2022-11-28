@@ -1,0 +1,354 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using TMPro;
+using Photon.Pun;
+using Photon.Realtime;
+using Unity.VisualScripting;
+using ExitGames.Client.Photon;
+using System;
+using System.Linq;
+using UnityEngine.SceneManagement;
+using System.Reflection;
+using UnityEngine.UI;
+
+namespace RGYB
+{
+    public class GameManager : MonoBehaviour
+    {
+        public static GameManager Instance;
+
+        // To be deleted
+        public TextMeshProUGUI RoomName;
+        public TextMeshProUGUI SequenceNum;
+        // To be deleted
+
+        public CanvasGroup ButtonCanvas;
+        public Button SelectButtonObject;
+        public GameObject GameBoardMask;
+
+        public GameObject[] TurnSign;
+
+        public GameObject[] FrontCards;
+        public GameObject[] BackCards;
+        private List<CardEffect> frontCardEffects = new List<CardEffect>();
+        private List<CardEffect> backCardEffects = new List<CardEffect>();
+
+        [HideInInspector] public bool IsFirstSelectPlayer;
+        public GameSequence[] GameSequences;
+        [HideInInspector] public int SequenceIndex = -1;
+
+        [HideInInspector] public int OpponentOrder = -1;
+        [HideInInspector] public int FirstSelctedCard = -1;
+        [HideInInspector] public int OpenedCard = -1;
+        [HideInInspector] public int BannedCard = -1;
+        [HideInInspector] public int SecondSelectedCard = -1;
+        [HideInInspector] public int CannotBeBannedCard = -1;
+
+
+#if UNITY_EDITOR
+        public void LoadSequence()
+        {
+            Debug.Log("LoadSequence()");
+
+            // Here, GameSequences has several "GameSequence" with 
+            // stringGameSequenceType, MyGameSequenceType, FullSequenceSeconds
+            GameSequences = JsonReader.ReadSequence();
+
+            // Active all "SequenceObject" object in the scene to be found
+            GameObject parent = GameObject.Find("SequenceObject");
+            for (int i = 0; i < parent.transform.childCount; i++) parent.transform.GetChild(i).gameObject.SetActive(true);
+
+            // Get all "SequenceObject" object in the scene
+            UnityEngine.Object[] SequenceObjectsInScene = FindObjectsOfType(typeof(SequenceObject));
+            int[] visited = new int[SequenceObjectsInScene.Length];
+
+            // Match "SequenceObject" in the scene to the "GameSequence" in the GameSequences
+            for (int i = 0; i < GameSequences.Length; i++)
+            {
+                for (int j = 0; j < SequenceObjectsInScene.Length; j++)
+                {
+                    if (visited[j] == 0 && SequenceObjectsInScene[j].name.Contains(GameSequences[i].stringGameSequenceType))
+                    {
+                        visited[j] = 1;
+                        GameSequences[i].MySequenceObject = SequenceObjectsInScene[j].GetComponent<SequenceObject>();
+                        break;
+                    }
+                }
+            }
+
+            // Deactive all "SequenceObject" object in the scene to hide
+            for (int i = 0; i < parent.transform.childCount; i++) parent.transform.GetChild(i).gameObject.SetActive(false);
+        }
+#endif
+
+        private void Awake()
+        {
+            Instance = this.GetComponent<GameManager>();
+
+            // TO be on!!!!!
+            //IsFirstSelectPlayer = PhotonManager.Instance.IsFirstSelectPlayer();
+            //RoomName.text = PhotonManager.Instance.GetRoomName();
+
+            SetGameEnvironment();
+        }
+
+        public void SetGameEnvironment()
+        {
+            // Set GameBoardMask active
+            GameBoardMask.SetActive(true);
+
+            // Set Buttons to be not interactable
+            ButtonCanvas.interactable = false;
+
+            // Initialize info variables
+            SequenceIndex = OpponentOrder = FirstSelctedCard = OpenedCard = BannedCard = SecondSelectedCard = -1;
+
+            // Set Cards alpha zero & Set CardEffects
+            for (int i = 0; i < FrontCards.Length; i++)
+            {
+                frontCardEffects.Add(FrontCards[i].GetComponent<CardEffect>());
+                backCardEffects.Add(BackCards[i].GetComponent<CardEffect>());
+                FrontCards[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
+                BackCards[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
+            }
+
+            // Set turn sign alpha zero
+            for (int i = 0; i < TurnSign.Length; i++)
+            {
+                TurnSign[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
+            }
+        }
+
+        private void Start()
+        {
+            if (GameSequences.Length == 0)
+            {
+                Debug.Log("No Sequence exist");
+                return;
+            }
+
+            CallNextSequence();
+        }
+
+        public void CallNextSequence()
+        {
+            if (SequenceIndex >= GameSequences.Length - 1)
+            {
+                Debug.Log("End of the game");
+                return;
+            }
+
+            SequenceIndex++;
+            SequenceNum.text = $"Sequence {SequenceIndex} : {GameSequences[SequenceIndex].MyGameSequenceType}";
+
+            Debug.LogFormat("SequenceIndex : {0}, SequenceType : {1}", SequenceIndex, GameSequences[SequenceIndex].MyGameSequenceType);
+            GameSequences[SequenceIndex].MySequenceObject.CallMySequence(SequenceIndex);
+        }
+
+        #region Button Methods
+        public void SetSelectButtonInteractable(bool isInteractable)
+        {
+            SelectButtonObject.interactable = isInteractable;
+        }
+
+        // TODO : Emotion
+        public void EmotionButton()
+        {
+
+        }
+
+        // TODO : Select
+        public void SelectButton()
+        {
+
+        }
+
+        // TODO : Option
+        public void OptionButton()
+        {
+
+        }
+
+        public void ExitButton()
+        {
+            Debug.Log("ExitGame()");
+            PhotonManager.Instance.ExitGame();
+        }
+
+        #endregion
+
+
+        #region Card Methods
+        public void SetFrontCardState(int index, CardState cardState)
+        {
+            frontCardEffects[index].SetCardState(cardState);
+        }
+
+        public void SetBackCardState(int index, CardState cardState)
+        {
+            backCardEffects[index].SetCardState(cardState);
+        }
+
+        public void SetAllFrontCardsState(CardState cardState)
+        {
+            for (int i = 0; i < frontCardEffects.Count; i++)
+            {
+                SetFrontCardState(i, cardState);
+            }
+        }
+
+        public void SetAllBackCardsState(CardState cardState)
+        {
+            for (int i = 0; i < backCardEffects.Count; i++)
+            {
+                SetBackCardState(i, cardState);
+            }
+        }
+
+        public void CardSelected(int cardNum)
+        {
+            Debug.LogFormat("SequenceIndex : {0}, CardNum : {1}", SequenceIndex, cardNum);
+
+            if (SequenceIndex == (int)GameSequenceType.FirstSelect) FirstSelctedCard = cardNum;
+            else if (SequenceIndex == (int)GameSequenceType.OpenNonSelected) OpenedCard = cardNum;
+            else if (SequenceIndex == (int)GameSequenceType.Ban) BannedCard = cardNum;
+            else if (SequenceIndex == (int)GameSequenceType.SecondSelect) SecondSelectedCard = cardNum;
+
+            for (int i = 0; i < frontCardEffects.Count; i++)
+            {
+                if (SequenceIndex == (int)GameSequenceType.FirstSelect && i == FirstSelctedCard) continue;
+                else if (SequenceIndex == (int)GameSequenceType.OpenNonSelected && i == OpenedCard) continue;
+                else if (SequenceIndex == (int)GameSequenceType.Ban && i == BannedCard) continue;
+                else if (SequenceIndex == (int)GameSequenceType.SecondSelect && i == SecondSelectedCard) continue;
+
+                frontCardEffects[i].SetCardState(CardState.Selective);
+                frontCardEffects[i].NoneEffect();
+            }
+        }
+
+        public void ResetFrontCards()
+        {
+            for (int i = 0; i < frontCardEffects.Count; i++)
+            {
+                frontCardEffects[i].NoneEffect();
+            }
+        }
+
+        // Not used
+        //public void SyncronizeCardEffect(int cardNum, int cardEffect)
+        //{
+        //    // Called : SecondSelect
+        //    if (IsFirstSelectPlayer)
+        //    {
+        //        if (cardEffect == (int)EffectData.None)
+        //        {
+        //            frontCardEffects[cardNum].NoneEffect();
+        //        }
+        //        else if (cardEffect == (int)EffectData.Hover)
+        //        {
+        //            frontCardEffects[cardNum].HoverEffect();
+        //        }
+        //        else if (cardEffect == (int)EffectData.Selected)
+        //        {
+        //            frontCardEffects[cardNum].SelectedEffect();
+        //        }
+        //    }
+        //    // Called : FirstSelect, OpenNonSelected, Ban
+        //    else
+        //    {
+        //        if (cardEffect == (int)EffectData.None)
+        //        {
+        //            backCardEffects[cardNum].NoneEffect();
+        //        }
+        //        else if (cardEffect == (int)EffectData.Hover)
+        //        {
+        //            backCardEffects[cardNum].HoverEffect();
+        //        }
+        //        else if (cardEffect == (int)EffectData.Selected)
+        //        {
+        //            backCardEffects[cardNum].SelectedEffect();
+        //        }
+        //    }
+        //}
+
+        public int PickRandomCard()
+        {
+            List<int> randomPool = new List<int>();
+
+            // Called : FirstSelect, OpenNonSelected, Ban
+            if (IsFirstSelectPlayer)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    if (i == FirstSelctedCard) continue;
+                    if (i == CannotBeBannedCard) continue;
+                    randomPool.Add(i);
+                }
+            }
+            // Called : SecondSelect
+            else
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    if (i == BannedCard) continue;
+                    randomPool.Add(i);
+                }
+            }
+
+            return randomPool[UnityEngine.Random.Range(0, randomPool.Count)];
+        }
+
+        #endregion
+
+
+        public GameResult GetResult()
+        {
+            if (FirstSelctedCard == SecondSelectedCard) return GameResult.WinTogether;
+            if (Math.Abs(FirstSelctedCard - SecondSelectedCard) == 2) return GameResult.LoseTogether;
+
+            if (FirstSelctedCard - SecondSelectedCard == -1 || FirstSelctedCard - SecondSelectedCard == 3)
+            {
+                if (IsFirstSelectPlayer) return GameResult.WinAlone;
+                else return GameResult.LoseAlone;
+            }
+            else if (SecondSelectedCard - FirstSelctedCard == -1 || SecondSelectedCard - FirstSelctedCard == 3)
+            {
+                if (IsFirstSelectPlayer) return GameResult.LoseAlone;
+                else return GameResult.WinAlone;
+            }
+            else
+            {
+                Debug.LogError("It can't be occur!");
+                return GameResult.WinTogether;
+            }
+        }
+    }
+
+    [System.Serializable]
+    public enum GameResult
+    {
+        WinAlone = 100, WinTogether = 50, LoseAlone = -100, LoseTogether = -50
+    }
+
+    [System.Serializable]
+    public enum GameSequenceType
+    {
+        Start, FirstSelect, OpenNonSelected, Ban, SecondSelect, Result
+    }
+
+    [System.Serializable]
+    public class GameSequence
+    {
+        [HideInInspector] public string stringGameSequenceType;
+        public GameSequenceType MyGameSequenceType;
+        public SequenceObject MySequenceObject;
+        public float FullSequenceSeconds;
+        // public GameObject[] CardPositions;
+
+        public void Mapping()
+        {
+            MyGameSequenceType = (GameSequenceType)Enum.Parse(typeof(GameSequenceType), stringGameSequenceType);
+        }
+    }
+}
