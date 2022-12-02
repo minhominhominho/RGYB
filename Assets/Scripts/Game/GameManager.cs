@@ -16,6 +16,7 @@ namespace RGYB
 {
     public class GameManager : MonoBehaviour
     {
+
         public static GameManager Instance;
 
         // To be deleted
@@ -23,10 +24,23 @@ namespace RGYB
         public TextMeshProUGUI SequenceNum;
         // To be deleted
 
-        public CanvasGroup ButtonCanvas;
-        public Button SelectButtonObject;
-        public GameObject GameBoardMask;
+        [Header("UI")]
+        [SerializeField] private float CanvasGroupFadingTime = 0.5f;
+        [SerializeField] private float CanvasGroupShownTime = 5f;
+        [HideInInspector] public CanvasGroup CurrentCanvasGroup = null;
+        private bool isClosingCurrentCanvasGroup = false;
+        public CanvasGroup SequenceCanvas;
 
+        public CanvasGroup PopUpFromButtonUI;
+        public CanvasGroup EmotionPopUpFromButtonUI;
+        public CanvasGroup SelectPopUpFromButtonUI;
+        public CanvasGroup OptionPopUpFromButtonUI;
+        public CanvasGroup ExitPopUpFromButtonUI;
+
+        public CanvasGroup ButtonUI;
+
+        [Header("Game")]
+        public GameObject GameBoardMask;
         public GameObject[] TurnSign;
 
         public GameObject[] FrontCards;
@@ -34,6 +48,7 @@ namespace RGYB
         private List<CardEffect> frontCardEffects = new List<CardEffect>();
         private List<CardEffect> backCardEffects = new List<CardEffect>();
 
+        [Header("GameSequences")]
         [HideInInspector] public bool IsFirstSelectPlayer;
         public GameSequence[] GameSequences;
         [HideInInspector] public int SequenceIndex = -1;
@@ -77,6 +92,13 @@ namespace RGYB
                 }
             }
 
+            for (int i = 0; i < GameSequences.Length; i++)
+            {
+                if (SequenceCanvas.transform.Find(GameSequences[i].stringGameSequenceType) == null) continue;
+                GameSequences[i].CavasGroupObject =
+                  SequenceCanvas.transform.Find(GameSequences[i].stringGameSequenceType).GetComponent<CanvasGroup>();
+            }
+
             // Deactive all "SequenceObject" object in the scene to hide
             for (int i = 0; i < parent.transform.childCount; i++) parent.transform.GetChild(i).gameObject.SetActive(false);
         }
@@ -97,9 +119,6 @@ namespace RGYB
         {
             // Set GameBoardMask active
             GameBoardMask.SetActive(true);
-
-            // Set Buttons to be not interactable
-            ButtonCanvas.interactable = false;
 
             // Initialize info variables
             SequenceIndex = OpponentOrder = FirstSelctedCard = OpenedCard = BannedCard = SecondSelectedCard = -1;
@@ -146,36 +165,136 @@ namespace RGYB
             GameSequences[SequenceIndex].MySequenceObject.CallMySequence(SequenceIndex);
         }
 
-        #region Button Methods
-        public void SetSelectButtonInteractable(bool isInteractable)
+
+        #region Button & UI Methods
+
+        public void OpenCanvasGroup(CanvasGroup cg, bool isSequenceInfo = false, bool isFade = false)
         {
-            SelectButtonObject.interactable = isInteractable;
+            if (CurrentCanvasGroup != null)
+            {
+                if (isSequenceInfo) CloseCurrentCanvasGroup(false);
+                else return;
+            }
+
+            ButtonUI.interactable = false;
+            if (isFade)
+            {
+                CurrentCanvasGroup = cg;
+                if (isSequenceInfo) StartCoroutine(sequenceCanvasTimer());
+                StartCoroutine(fadeInCurrentCanvasGroup());
+            }
+            else
+            {
+                CurrentCanvasGroup = cg;
+                CurrentCanvasGroup.gameObject.SetActive(true);
+                CurrentCanvasGroup.alpha = 1;
+                CurrentCanvasGroup.interactable = true;
+            }
         }
 
-        // TODO : Emotion
-        public void EmotionButton()
+        public void CloseCurrentCanvasGroup(bool isFade = false)
         {
+            if (CurrentCanvasGroup == null || isClosingCurrentCanvasGroup) return;
 
+            isClosingCurrentCanvasGroup = true;
+            if (isFade)
+            {
+                StartCoroutine(fadeOutCurrentCanvasGroup());
+            }
+            else
+            {
+                CurrentCanvasGroup.interactable = false;
+                CurrentCanvasGroup.alpha = 0;
+                CurrentCanvasGroup.gameObject.SetActive(false);
+                CurrentCanvasGroup = null;
+                isClosingCurrentCanvasGroup = false;
+                ButtonUI.interactable = true;
+            }
         }
 
-        // TODO : Select
+        private IEnumerator fadeInCurrentCanvasGroup()
+        {
+            CurrentCanvasGroup.gameObject.SetActive(true);
+            CurrentCanvasGroup.alpha = 0;
+            while (CurrentCanvasGroup.alpha < 1)
+            {
+                CurrentCanvasGroup.alpha += 0.01f;
+                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+            }
+            CurrentCanvasGroup.interactable = true;
+        }
+
+        private IEnumerator fadeOutCurrentCanvasGroup()
+        {
+            while (CurrentCanvasGroup.alpha > 0)
+            {
+                CurrentCanvasGroup.alpha -= 0.01f;
+                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+            }
+            CurrentCanvasGroup.interactable = false;
+            CurrentCanvasGroup.alpha = 0;
+            CurrentCanvasGroup.gameObject.SetActive(false);
+            CurrentCanvasGroup = null;
+            isClosingCurrentCanvasGroup = false;
+            ButtonUI.interactable = true;
+        }
+
+        // Sequence Canvas will be closed automatically if it is not closed n seconds after opened.
+        private IEnumerator sequenceCanvasTimer()
+        {
+            float passedTime = 0;
+
+            while (CanvasGroupShownTime > passedTime && CurrentCanvasGroup != null)
+            {
+                passedTime += 0.01f;
+                yield return new WaitForSecondsRealtime(0.01f);
+            }
+
+            if (CanvasGroupShownTime <= passedTime) CloseCurrentCanvasGroup(true);
+            else yield return null;
+        }
+
+        public void ClickButtonUI(string buttonName)
+        {
+            if (CurrentCanvasGroup == null)
+            {
+                //if (buttonName == "Emotion")
+                //{
+                //    PrevCanvasGroup = EmotionPopUpFromButtonUI;
+                //}
+                //else 
+                if (buttonName == "Select")
+                {
+                    // TODO : 알맞은 단계에서만 작동해야됨
+                    // PrevCanvasGroup = SelectPopUpFromButtonUI;
+                }
+                else if (buttonName == "Option")
+                {
+                    OpenCanvasGroup(OptionPopUpFromButtonUI, false, true);
+                }
+                else if (buttonName == "Exit")
+                {
+                    OpenCanvasGroup(ExitPopUpFromButtonUI, false, true);
+                }
+            }
+        }
+
+        // TODO : 아직 구현 못함
+        public void SendEmotion(int num)
+        {
+            Debug.Log("Num : " + num);
+        }
+
+        // TODO : 아직 구현 못함
         public void SelectButton()
         {
-
-        }
-
-        // TODO : Option
-        public void OptionButton()
-        {
-
+            //StartCoroutine(SetCanvasGroup(, true));
         }
 
         public void ExitButton()
         {
-            Debug.Log("ExitGame()");
             PhotonManager.Instance.ExitGame();
         }
-
         #endregion
 
 
@@ -342,6 +461,7 @@ namespace RGYB
     {
         [HideInInspector] public string stringGameSequenceType;
         public GameSequenceType MyGameSequenceType;
+        public CanvasGroup CavasGroupObject;
         public SequenceObject MySequenceObject;
         public float FullSequenceSeconds;
         // public GameObject[] CardPositions;

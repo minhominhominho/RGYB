@@ -44,10 +44,6 @@ namespace RGYB
                 yield return new WaitForSecondsRealtime(0.01f * FadingTime);
             }
 
-            // Set interactable buttons
-            GameManager.Instance.ButtonCanvas.interactable = true;
-            GameManager.Instance.SetSelectButtonInteractable(false);
-
             // Call Next Sequence
             EndMySequence(new object[] { });
         }

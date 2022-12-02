@@ -15,7 +15,6 @@ namespace RGYB
             // Roll Game Scroll
             Vector3 origPos = GameManager.Instance.GameBoardMask.transform.position;
             Vector3 destPos = maskDestWorldPosition.position;
-            Debug.Log(destPos);
             while (GameManager.Instance.GameBoardMask.transform.position.x < destPos.x)
             {
                 GameManager.Instance.GameBoardMask.transform.position = new Vector3(
@@ -43,10 +42,6 @@ namespace RGYB
                 }
                 yield return new WaitForSecondsRealtime(0.01f * FadingTime);
             }
-
-            // Set interactable buttons
-            GameManager.Instance.ButtonCanvas.interactable = true;
-            GameManager.Instance.SetSelectButtonInteractable(false);
 
             // Call Next Sequence
             EndMySequence(new object[] { });

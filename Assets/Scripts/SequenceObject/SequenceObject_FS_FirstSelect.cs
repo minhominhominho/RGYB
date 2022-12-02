@@ -13,6 +13,13 @@ namespace RGYB
 
         //public override IEnumerator SequenceJob()
         //{
+        //    // Alert step
+
+
+
+        //    //
+        //    GameManager.Instance.SetSelectButtonInteractable(false);
+
         //    // Set card state
         //    GameManager.Instance.SetAllFrontCardsState(CardState.Selective);
         //    GameManager.Instance.SetAllBackCardsState(CardState.None);
@@ -101,8 +108,8 @@ namespace RGYB
         //    //    yield return new WaitForSecondsRealtime(0.01f * fadingTime);
         //    //}
 
-        //    EndMySequence(new object[] { 
-        //        GameManager.Instance.FirstSelctedCard, 
+        //    EndMySequence(new object[] {
+        //        GameManager.Instance.FirstSelctedCard,
         //        GameManager.Instance.GetBackCardNum(GameManager.Instance.FirstSelctedCard)
         //    });
         //    yield return null;

@@ -9,11 +9,11 @@
             "FullSequenceSeconds": 60
         },
         {
-            "stringGameSequenceType": "OpenNonSelected",
+            "stringGameSequenceType": "Ban",
             "FullSequenceSeconds": 60
         },
         {
-            "stringGameSequenceType": "Ban",
+            "stringGameSequenceType": "OpenNonSelected",
             "FullSequenceSeconds": 60
         },
         {
