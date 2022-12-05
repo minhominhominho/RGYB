@@ -7,87 +7,95 @@ namespace RGYB
 {
     public class SequenceObject_FS_Ban : SequenceObject
     {
-        //private Coroutine timer;
-        //private bool isSent = false;
+        private bool isSent = false;
 
-        //public override IEnumerator SequenceJob()
-        //{
-        //    GameManager.Instance.CannotBeBannedCard = GameManager.Instance.FirstSelctedCard - 1;
-        //    if (GameManager.Instance.CannotBeBannedCard == -1) GameManager.Instance.CannotBeBannedCard = 3;
+        public override IEnumerator SequenceJob()
+        {
+            // Open Canvas Group
+            GameManager.Instance.OpenSequenceCanvasGroup();
 
-        //    timer = StartCoroutine(Timer());
+            while (!GameManager.Instance.CheckPanelClosed())
+            {
+                yield return new WaitForSecondsRealtime(0.01f);
+            }
 
-        //    yield return null;
-        //}
+            GameManager.Instance.SetActiveFakeSelectButton(false);
 
-        //private IEnumerator Timer()
-        //{
-        //    while (PassedTime < GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
-        //    {
-        //        PassedTime += 0.001f;
-        //        yield return new WaitForSecondsRealtime(0.001f);
-        //    }
+            // Set card state
+            GameManager.Instance.SetAllFrontCardsState(CardState.Selective);
 
-        //    if (!isSent)
-        //    {
-        //        isSent = true;
-        //        // Not select until timeout
-        //        if (GameManager.Instance.BannedCard == -1)
-        //        {
-        //            GameManager.Instance.BannedCard = GameManager.Instance.PickRandomCard();
-        //        }
+            // Set cannot be banned card
+            GameManager.Instance.CannotBeBannedCard = GameManager.Instance.FirstSelctedCard - 1;
+            if (GameManager.Instance.CannotBeBannedCard == -1) GameManager.Instance.CannotBeBannedCard = 3;
 
-        //        // Lock
-        //        GameManager.Instance.SetFrontCardState(GameManager.Instance.BannedCard, CardState.NotBeChanged);
+            GameManager.Instance.CannotBeSelectedEffect(false);
 
-        //        // TODO : Effect
-        //        int tempIdx = 0;
-        //        if (GameManager.Instance.OpenedCard == GameManager.Instance.BannedCard) tempIdx = 1;
-        //        GameManager.Instance.FrontCards[GameManager.Instance.BannedCard].transform
-        //              .GetChild(0).GetChild(tempIdx).GetComponent<TextMeshProUGUI>().text = "Banned";
+            // Wait for selecting
+            StartCoroutine(timer());
 
-        //        // Anyway just send selected card (by random or recent selected)
-        //        EndMySequence(new object[] { GameManager.Instance.BannedCard });
-        //    }
-        //}
+            yield return null;
+        }
 
-        //// Attached to "End turn Button" or Called when sequence timeout occured
-        //public void EndSelection()
-        //{
-        //    if (!isSent)
-        //    {
-        //        isSent = true;
-        //        Debug.Log("EndSelection()");
+        private IEnumerator timer()
+        {
+            while (PassedTime < GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
+            {
+                PassedTime += 0.001f;
+                yield return new WaitForSecondsRealtime(0.001f);
+            }
 
-        //        if (GameManager.Instance.BannedCard == -1)
-        //        {
-        //            Debug.Log("Card not selected");
-        //            isSent = false;
-        //            // TODO : Effect or Popup
-        //            return;
-        //        }
+            // If not selected until timeout
+            if (!isSent)
+            {
+                isSent = true;
 
-        //        if (GameManager.Instance.BannedCard == GameManager.Instance.CannotBeBannedCard)
-        //        {
-        //            Debug.Log("Cannot ban this card");
-        //            isSent = false;
-        //            // TODO : Effect or Popup
-        //            return;
-        //        }
+                if (GameManager.Instance.BannedCard == -1)
+                {
+                    GameManager.Instance.BannedCard = GameManager.Instance.PickRandomCard();
+                }
 
-        //        // Lock
-        //        GameManager.Instance.SetFrontCardState(GameManager.Instance.BannedCard, CardState.NotBeChanged);
+                StartCoroutine(endCoroutine());
+            }
+        }
 
-        //        // TODO : Effect
-        //        int tempIdx = 0;
-        //        if (GameManager.Instance.OpenedCard == GameManager.Instance.BannedCard) tempIdx = 1;
-        //        GameManager.Instance.FrontCards[GameManager.Instance.BannedCard].transform
-        //              .GetChild(0).GetChild(tempIdx).GetComponent<TextMeshProUGUI>().text = "Banned";
+        // Attached to "End turn Button" or Called when sequence timeout occured
+        public void EndSelection()
+        {
+            if (!isSent)
+            {
+                isSent = true;
+                Debug.Log("EndSelection()");
 
-        //        StopCoroutine(Timer());
+                if (GameManager.Instance.BannedCard == -1)
+                {
+                    Debug.Log("Card not selected");
+                    isSent = false;
+                    GameManager.Instance.OpenWrongSelectCanvasGroup();
+                    return;
+                }
 
-        //        EndMySequence(new object[] { GameManager.Instance.BannedCard });
-        //    }
-        //}
+                StopCoroutine(timer());
+                StartCoroutine(endCoroutine());
+            }
+        }
+
+        // Called by button or timeout
+        private IEnumerator endCoroutine()
+        {
+            GameManager.Instance.SetActiveFakeSelectButton(true);
+            GameManager.Instance.CannotBeSelectedEffect(true);
+
+            // Set card state
+            GameManager.Instance.SetAllFrontCardsState(CardState.None);
+            GameManager.Instance.ResetFrontCards();
+
+            GameManager.Instance.SetSubmit(1, GameManager.Instance.BannedCard);
+            yield return new WaitForSecondsRealtime(0.5f);
+            GameManager.Instance.BanSignEffect();
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            EndMySequence(new object[] { GameManager.Instance.BannedCard });
+            yield return null;
+        }
     }
 }

@@ -10,17 +10,14 @@ namespace RGYB
 {
     public class EmotionButton : MonoBehaviour
     {
-        // TODO : 아직 구현 못함
-        //private void OnMouseDown()
-        //{
-        //    if (GameManager.Instance.CurrentCanvasGroup == null)
-        //    {
-        //        GameManager.Instance.SetPopUpUI(true);
-        //        GameManager.Instance.CurrentCanvasGroup = GameManager.Instance.EmotionPopUpFromButtonUI;
-        //        GameManager.Instance.CurrentCanvasGroup.gameObject.SetActive(true);
-        //        GameManager.Instance.CurrentCanvasGroup.interactable = true;
-        //        Debug.Log("dd");
-        //    }
-        //}
+        private void OnMouseDown()
+        {
+            GameManager.Instance.OpenCanvasGroup(GameManager.Instance.EmotionSelectUI, false, false);
+        }
+
+        private void OnMouseUp()
+        {
+            GameManager.Instance.CloseCurrentCanvasGroup(false);
+        }
     }
 }

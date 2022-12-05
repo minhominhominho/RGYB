@@ -7,101 +7,91 @@ namespace RGYB
 {
     public class SequenceObject_FS_OpenNonSelected : SequenceObject
     {
-        //private bool isSent = false;
-        //[SerializeField] private Transform selectedCardDest;
-        //[SerializeField] private GameObject openEffect;
-        //private const float fadingTime = 0.5f;
+        private bool isSent = false;
 
-        //public override IEnumerator SequenceJob()
-        //{
-        //    // Wait for selecting
-        //    StartCoroutine(Timer());
+        public override IEnumerator SequenceJob()
+        {
+            // Open Canvas Group
+            GameManager.Instance.OpenSequenceCanvasGroup();
 
-        //    yield return null;
-        //}
+            while (!GameManager.Instance.CheckPanelClosed())
+            {
+                yield return new WaitForSecondsRealtime(0.01f);
+            }
 
-        //private IEnumerator Timer()
-        //{
-        //    while (PassedTime < GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
-        //    {
-        //        PassedTime += 0.001f;
-        //        yield return new WaitForSecondsRealtime(0.001f);
-        //    }
+            GameManager.Instance.SetActiveFakeSelectButton(false);
 
-        //    // If not selected until timeout
-        //    if (!isSent)
-        //    {
-        //        isSent = true;
-        //        // Not select until timeout
-        //        if (GameManager.Instance.OpenedCard == -1)
-        //        {
-        //            GameManager.Instance.OpenedCard = GameManager.Instance.PickRandomCard();
-        //        }
+            // Set card state
+            GameManager.Instance.SetAllFrontCardsState(CardState.Selective);
 
-        //        StartCoroutine(endCoroutine());
-        //    }
-        //}
+            GameManager.Instance.CannotBeSelectedEffect(false);
 
-        //// Attached to "End turn Button" or Called when sequence timeout occured
-        //public void EndSelection()
-        //{
-        //    if (!isSent)
-        //    {
-        //        isSent = true;
-        //        Debug.Log("EndSelection()");
+            // Wait for selecting
+            StartCoroutine(timer());
 
-        //        if (GameManager.Instance.OpenedCard == -1)
-        //        {
-        //            Debug.Log("Card not selected");
-        //            isSent = false;
-        //            // TODO : Effect or Popup
-        //            return;
-        //        }
+            yield return null;
+        }
 
-        //        StopCoroutine(Timer());
-        //        StartCoroutine(endCoroutine());
-        //    }
-        //}
+        private IEnumerator timer()
+        {
+            while (PassedTime < GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
+            {
+                PassedTime += 0.001f;
+                yield return new WaitForSecondsRealtime(0.001f);
+            }
 
-        //// Called by button or timeout
-        //private IEnumerator endCoroutine()
-        //{
-        //    // No Lock
+            // If not selected until timeout
+            if (!isSent)
+            {
+                isSent = true;
 
-        //    // Move selected card using fadein & fadeout
-        //    GameObject g = GameManager.Instance.FrontCards[GameManager.Instance.OpenedCard];
-        //    SpriteRenderer spr = g.GetComponent<SpriteRenderer>();
+                if (GameManager.Instance.OpenedCard == -1)
+                {
+                    GameManager.Instance.OpenedCard = GameManager.Instance.PickRandomCard();
+                }
 
-        //    while (spr.color.a > 0)
-        //    {
-        //        spr.color = new Vector4(spr.color.r, spr.color.g, spr.color.b, spr.color.a - 0.01f);
-        //        yield return new WaitForSecondsRealtime(0.01f * fadingTime);
-        //    }
-        //    g.transform.position = selectedCardDest.position;
-        //    g.transform.rotation = selectedCardDest.rotation;
-        //    g.transform.localScale = selectedCardDest.localScale;
-        //    while (spr.color.a < 1)
-        //    {
-        //        spr.color = new Vector4(spr.color.r, spr.color.g, spr.color.b, spr.color.a + 0.01f);
-        //        yield return new WaitForSecondsRealtime(0.01f * fadingTime);
-        //    }
+                StartCoroutine(endCoroutine());
+            }
+        }
 
-        //    // '+' fadein
-        //    openEffect.SetActive(true);
-        //    spr = openEffect.GetComponent<SpriteRenderer>();
-        //    spr.color = new Vector4(spr.color.r, spr.color.g, spr.color.b, 0);
-        //    while (spr.color.a < 1)
-        //    {
-        //        spr.color = new Vector4(spr.color.r, spr.color.g, spr.color.b, spr.color.a + 0.01f);
-        //        yield return new WaitForSecondsRealtime(0.01f * fadingTime);
-        //    }
+        // Attached to "End turn Button" or Called when sequence timeout occured
+        public void EndSelection()
+        {
+            if (!isSent)
+            {
+                isSent = true;
+                Debug.Log("EndSelection()");
 
-        //    EndMySequence(new object[] {
-        //        GameManager.Instance.OpenedCard,
-        //        GameManager.Instance.GetBackCardNum(GameManager.Instance.OpenedCard)
-        //    });
+                if (GameManager.Instance.OpenedCard == -1)
+                {
+                    Debug.Log("Card not selected");
+                    isSent = false;
+                    // TODO : Effect or Popup
+                    return;
+                }
 
-        //    yield return null;
-        //}
+                StopCoroutine(timer());
+                StartCoroutine(endCoroutine());
+            }
+        }
+
+        // Called by button or timeout
+        private IEnumerator endCoroutine()
+        {
+            GameManager.Instance.SetActiveFakeSelectButton(true);
+            GameManager.Instance.CannotBeSelectedEffect(true);
+
+            // Set card state
+            GameManager.Instance.SetAllFrontCardsState(CardState.None);
+            GameManager.Instance.ResetFrontCards();
+
+            GameManager.Instance.SetSubmit(2, GameManager.Instance.OpenedCard);
+            yield return new WaitForSecondsRealtime(0.5f);
+            GameManager.Instance.OpenSignEffect();
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            EndMySequence(new object[] { GameManager.Instance.OpenedCard });
+            yield return null;
+        }
     }
 }

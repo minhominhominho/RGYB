@@ -7,29 +7,31 @@ namespace RGYB
 {
     public class SequenceObject_SS_Ban : SequenceObject
     {
-        //public override IEnumerator SequenceJob()
-        //{
-        //    while (GameManager.Instance.BannedCard == -1)
-        //    {
-        //        PassedTime += 0.001f;
-        //        yield return new WaitForSecondsRealtime(0.001f);
-        //    }
+        public override IEnumerator SequenceJob()
+        {
+            // Open Canvas Group
+            GameManager.Instance.OpenSequenceCanvasGroup();
 
-        //    if (PassedTime + ExtraTimeForReciever > GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
-        //        Debug.LogError("TimeOut : Something bad happens");
+            while (!GameManager.Instance.CheckPanelClosed())
+            {
+                yield return new WaitForSecondsRealtime(0.01f);
+            }
 
-        //    // Lock
-        //    GameManager.Instance.SetAllBackCardsState(CardState.NotBeChanged);
+            while (GameManager.Instance.BannedCard == -1)
+            {
+                PassedTime += 0.001f;
+                yield return new WaitForSecondsRealtime(0.001f);
+            }
 
-        //    // TODO : Effect
-        //    GameManager.Instance.BackCards[GameManager.Instance.BannedCard].GetComponent<SpriteRenderer>().sprite =
-        //        GameManager.Instance.FrontCards[GameManager.Instance.BannedCard].GetComponent<SpriteRenderer>().sprite;
-        //    int tempIdx = 0;
-        //    if (GameManager.Instance.OpenedCard == GameManager.Instance.BannedCard) tempIdx = 1;
-        //    GameManager.Instance.BackCards[GameManager.Instance.BannedCard].transform
-        //        .GetChild(0).GetChild(tempIdx).GetComponent<TextMeshProUGUI>().text = "Banned";
+            if (PassedTime + ExtraTimeForReciever > GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
+                Debug.LogError("TimeOut : Something bad happens");
 
-        //    EndMySequence(new object[] { });
-        //}
+            GameManager.Instance.SetSubmit(1, GameManager.Instance.BannedCard);
+            yield return new WaitForSecondsRealtime(0.5f);
+            GameManager.Instance.BanSignEffect();
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            EndMySequence(new object[] { });
+        }
     }
 }

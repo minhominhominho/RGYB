@@ -233,16 +233,6 @@ namespace RGYB
             ExitGame();
         }
 
-        // Not used
-        //// Called in CardEffects(Card Objects)
-        //public void SendingCardEffect(int cardNum, int cardEffect)
-        //{
-        //    // Debug.LogFormat("Send Card_{0}, Effect_{1}", cardNum, cardEffect);
-        //    RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
-        //    object[] eventContent = { cardNum, cardEffect };
-        //    PhotonNetwork.RaiseEvent(101, eventContent, raiseEventOptions, SendOptions.SendReliable);
-        //}
-
         public bool IsFirstSelectPlayer()
         {
             if (PhotonNetwork.IsMasterClient)
@@ -270,11 +260,18 @@ namespace RGYB
             PhotonNetwork.RaiseEvent(eventCode, eventContent, raiseEventOptions, SendOptions.SendReliable);
         }
 
+        public void SendEmotion(int num)
+        {
+            Debug.LogFormat("Send Emotion " + num);
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+            object[] eventContent = new object[] { num };
+            PhotonNetwork.RaiseEvent(100, eventContent, raiseEventOptions, SendOptions.SendReliable);
+        }
 
         public void OnEvent(EventData photonEvent)
         {
             // SequenceOrder 0~100
-            if (photonEvent.Code >= 0 && photonEvent.Code <= 100)
+            if (photonEvent.Code >= 0 && photonEvent.Code < 100)
             {
                 Debug.LogFormat("Receive Synchronization " + photonEvent.Code);
                 GameManager.Instance.OpponentOrder = photonEvent.Code;
@@ -291,17 +288,17 @@ namespace RGYB
                     GameManager.Instance.FirstSelctedCard = (int)data[0];
                     Debug.LogFormat("Opponent First Selection : {0}", GameManager.Instance.FirstSelctedCard);
                 }
-                else if (photonEvent.Code == (int)GameSequenceType.OpenNonSelected && GameManager.Instance.OpenedCard == -1)
-                {
-                    object[] data = (object[])photonEvent.CustomData;
-                    GameManager.Instance.OpenedCard = (int)data[0];
-                    Debug.LogFormat("Opponent Non Selected Card : {0}", GameManager.Instance.OpenedCard);
-                }
                 else if (photonEvent.Code == (int)GameSequenceType.Ban && GameManager.Instance.BannedCard == -1)
                 {
                     object[] data = (object[])photonEvent.CustomData;
                     GameManager.Instance.BannedCard = (int)data[0];
                     Debug.LogFormat("Opponent Non Selected Card : {0}", GameManager.Instance.BannedCard);
+                }
+                else if (photonEvent.Code == (int)GameSequenceType.OpenNonSelected && GameManager.Instance.OpenedCard == -1)
+                {
+                    object[] data = (object[])photonEvent.CustomData;
+                    GameManager.Instance.OpenedCard = (int)data[0];
+                    Debug.LogFormat("Opponent Non Selected Card : {0}", GameManager.Instance.OpenedCard);
                 }
                 else if (photonEvent.Code == (int)GameSequenceType.SecondSelect && GameManager.Instance.SecondSelectedCard == -1)
                 {
@@ -313,7 +310,9 @@ namespace RGYB
             // Emotion 100
             else if (photonEvent.Code == 100)
             {
-                // TODO : Emotion Syncronization
+                Debug.Log("Get Emotion");
+                object[] data = (object[])photonEvent.CustomData;
+                GameManager.Instance.GetEmotion((int)data[0]);
             }
             // Not used
             //// CardEffect 101

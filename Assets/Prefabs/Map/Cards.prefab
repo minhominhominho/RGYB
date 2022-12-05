@@ -50,6 +50,7 @@ GameObject:
   - component: {fileID: 6880932504954893206}
   - component: {fileID: 6880932504954893207}
   - component: {fileID: 6880932504954893200}
+  - component: {fileID: 1529741303934108774}
   m_Layer: 0
   m_Name: Card_Red
   m_TagString: Untagged
@@ -138,6 +139,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CardNum: 0
   MyState: 0
+  NoneSprite: {fileID: 0}
+  SelectedSprite: {fileID: 21300000, guid: cbc43ac885380d34d858b64b189128ce, type: 2}
+--- !u!61 &1529741303934108774
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6880932504954893205}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1.29, y: 1.82}
+    newSize: {x: 1.29, y: 1.82}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1.29, y: 1.82}
+  m_EdgeRadius: 0
 --- !u!1 &6880932505102908341
 GameObject:
   m_ObjectHideFlags: 0
@@ -317,6 +346,7 @@ GameObject:
   - component: {fileID: 6880932505197978607}
   - component: {fileID: 6880932505197978600}
   - component: {fileID: 6880932505197978601}
+  - component: {fileID: 329280226381507871}
   m_Layer: 0
   m_Name: Card_Yellow
   m_TagString: Untagged
@@ -405,6 +435,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CardNum: 2
   MyState: 0
+  NoneSprite: {fileID: 0}
+  SelectedSprite: {fileID: 21300000, guid: 71ea6dd547fcd884fa6dfbf0e6a10bdc, type: 2}
+--- !u!61 &329280226381507871
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6880932505197978606}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1.3, y: 1.82}
+    newSize: {x: 1.3, y: 1.82}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1.3, y: 1.82}
+  m_EdgeRadius: 0
 --- !u!1 &6880932505649550009
 GameObject:
   m_ObjectHideFlags: 0
@@ -500,6 +558,7 @@ GameObject:
   - component: {fileID: 6880932506302413884}
   - component: {fileID: 6880932506302413885}
   - component: {fileID: 6880932506302413886}
+  - component: {fileID: 4896505835081253054}
   m_Layer: 0
   m_Name: Card_Blue
   m_TagString: Untagged
@@ -588,6 +647,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CardNum: 3
   MyState: 0
+  NoneSprite: {fileID: 0}
+  SelectedSprite: {fileID: 21300000, guid: e326e5ebb88fe424b891c8bb59d362f9, type: 2}
+--- !u!61 &4896505835081253054
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6880932506302413875}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1.3, y: 1.82}
+    newSize: {x: 1.3, y: 1.82}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1.3, y: 1.82}
+  m_EdgeRadius: 0
 --- !u!1 &6880932506414221799
 GameObject:
   m_ObjectHideFlags: 0
@@ -683,6 +770,7 @@ GameObject:
   - component: {fileID: 6880932506686408945}
   - component: {fileID: 6880932506686408946}
   - component: {fileID: 6880932506686408947}
+  - component: {fileID: 2890401485419930574}
   m_Layer: 0
   m_Name: Card_Green
   m_TagString: Untagged
@@ -771,3 +859,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CardNum: 1
   MyState: 0
+  NoneSprite: {fileID: 0}
+  SelectedSprite: {fileID: 21300000, guid: d7c1722f63851fd45b1b82880478ea5f, type: 2}
+--- !u!61 &2890401485419930574
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6880932506686408944}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1.3, y: 1.82}
+    newSize: {x: 1.3, y: 1.82}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1.3, y: 1.82}
+  m_EdgeRadius: 0

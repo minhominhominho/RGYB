@@ -16,7 +16,6 @@ namespace RGYB
 {
     public class GameManager : MonoBehaviour
     {
-
         public static GameManager Instance;
 
         // To be deleted
@@ -29,15 +28,19 @@ namespace RGYB
         [SerializeField] private float CanvasGroupShownTime = 5f;
         [HideInInspector] public CanvasGroup CurrentCanvasGroup = null;
         private bool isClosingCurrentCanvasGroup = false;
-        public CanvasGroup SequenceCanvas;
 
-        public CanvasGroup PopUpFromButtonUI;
-        public CanvasGroup EmotionPopUpFromButtonUI;
+        public CanvasGroup SequenceCanvas;
+        public CanvasGroup ButtonUI;
+        public CanvasGroup EmotionSelectUI;
         public CanvasGroup SelectPopUpFromButtonUI;
         public CanvasGroup OptionPopUpFromButtonUI;
         public CanvasGroup ExitPopUpFromButtonUI;
 
-        public CanvasGroup ButtonUI;
+        public GameObject SelectButton;
+        public Image EmotionButton;
+        public Image MyEmotion;
+        public Image OpponentEmotion;
+        [SerializeField] private Sprite[] Emotions;
 
         [Header("Game")]
         public GameObject GameBoardMask;
@@ -46,7 +49,13 @@ namespace RGYB
         public GameObject[] FrontCards;
         public GameObject[] BackCards;
         private List<CardEffect> frontCardEffects = new List<CardEffect>();
-        private List<CardEffect> backCardEffects = new List<CardEffect>();
+
+        // 0 : Opponent, 1 : Ban, 2 : Open, 3 : My
+        public SpriteRenderer[] Submits;
+        public Sprite[] CardSprites;
+        public GameObject CannotBeSelectedEffectObject;
+        public GameObject BanEffectObject;
+        public GameObject OpenEffectObject;
 
         [Header("GameSequences")]
         [HideInInspector] public bool IsFirstSelectPlayer;
@@ -109,8 +118,8 @@ namespace RGYB
             Instance = this.GetComponent<GameManager>();
 
             // TO be on!!!!!
-            //IsFirstSelectPlayer = PhotonManager.Instance.IsFirstSelectPlayer();
-            //RoomName.text = PhotonManager.Instance.GetRoomName();
+            IsFirstSelectPlayer = PhotonManager.Instance.IsFirstSelectPlayer();
+            RoomName.text = PhotonManager.Instance.GetRoomName();
 
             SetGameEnvironment();
         }
@@ -127,7 +136,6 @@ namespace RGYB
             for (int i = 0; i < FrontCards.Length; i++)
             {
                 frontCardEffects.Add(FrontCards[i].GetComponent<CardEffect>());
-                backCardEffects.Add(BackCards[i].GetComponent<CardEffect>());
                 FrontCards[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
                 BackCards[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
             }
@@ -167,6 +175,26 @@ namespace RGYB
 
 
         #region Button & UI Methods
+
+        public void SetActiveFakeSelectButton(bool isAcitve)
+        {
+            SelectButton.SetActive(isAcitve);
+        }
+
+        public bool CheckPanelClosed()
+        {
+            return CurrentCanvasGroup == null;
+        }
+
+        public void OpenSequenceCanvasGroup()
+        {
+            OpenCanvasGroup(GameSequences[SequenceIndex].CavasGroupObject, true, true);
+        }
+
+        public void OpenWrongSelectCanvasGroup()
+        {
+            OpenCanvasGroup(SelectPopUpFromButtonUI, true, true);
+        }
 
         public void OpenCanvasGroup(CanvasGroup cg, bool isSequenceInfo = false, bool isFade = false)
         {
@@ -258,17 +286,7 @@ namespace RGYB
         {
             if (CurrentCanvasGroup == null)
             {
-                //if (buttonName == "Emotion")
-                //{
-                //    PrevCanvasGroup = EmotionPopUpFromButtonUI;
-                //}
-                //else 
-                if (buttonName == "Select")
-                {
-                    // TODO : 알맞은 단계에서만 작동해야됨
-                    // PrevCanvasGroup = SelectPopUpFromButtonUI;
-                }
-                else if (buttonName == "Option")
+                if (buttonName == "Option")
                 {
                     OpenCanvasGroup(OptionPopUpFromButtonUI, false, true);
                 }
@@ -279,16 +297,54 @@ namespace RGYB
             }
         }
 
-        // TODO : 아직 구현 못함
         public void SendEmotion(int num)
         {
             Debug.Log("Num : " + num);
+            PhotonManager.Instance.SendEmotion(num);
+            StartCoroutine(ShowEmotion(num, true));
         }
 
-        // TODO : 아직 구현 못함
-        public void SelectButton()
+        public void GetEmotion(int num)
         {
-            //StartCoroutine(SetCanvasGroup(, true));
+            StartCoroutine(ShowEmotion(num, false));
+        }
+
+        private IEnumerator ShowEmotion(int num, bool isMine) // true -> mine
+        {
+            Image whoseEmotion = isMine ? MyEmotion : OpponentEmotion;
+
+            if (isMine)
+            {
+                EmotionButton.gameObject.GetComponent<CircleCollider2D>().enabled = false;
+                EmotionButton.color = new Vector4(255, 255, 255, 0);
+            }
+
+            whoseEmotion.sprite = Emotions[num];
+
+            whoseEmotion.color = new Vector4(255, 255, 255, 0);
+            while (whoseEmotion.color.a < 1)
+            {
+                whoseEmotion.color = new Vector4(255, 255, 255, whoseEmotion.color.a + 0.01f);
+                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+            }
+            yield return new WaitForSecondsRealtime(2f);
+            while (whoseEmotion.color.a > 0)
+            {
+                whoseEmotion.color = new Vector4(255, 255, 255, whoseEmotion.color.a - 0.01f);
+                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+            }
+            whoseEmotion.color = new Vector4(255, 255, 255, 0);
+
+            if (isMine)
+            {
+                while (EmotionButton.color.a < 1)
+                {
+                    EmotionButton.color = new Vector4(255, 255, 255, EmotionButton.color.a + 0.01f);
+                    yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+                }
+                EmotionButton.color = new Vector4(255, 255, 255, 255);
+                EmotionButton.gameObject.GetComponent<CircleCollider2D>().enabled = true;
+            }
         }
 
         public void ExitButton()
@@ -299,14 +355,52 @@ namespace RGYB
 
 
         #region Card Methods
+
+        // 0 : Opponent, 1 : Ban, 2 : Open, 3 : My
+        public void SetSubmit(int submit, int cardColor)
+        {
+            Submits[submit].sprite = CardSprites[cardColor];
+            StartCoroutine(fadeSubmitCard(submit));
+        }
+
+        private IEnumerator fadeSubmitCard(int submit)
+        {
+            while (Submits[submit].color.a < 1)
+            {
+                Submits[submit].color = new Vector4(255, 255, 255, Submits[submit].color.a + 0.01f);
+                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+            }
+        }
+
+        public void CannotBeSelectedEffect(bool isActive)
+        {
+            if (SequenceIndex == (int)GameSequenceType.Ban)
+            {
+                if (!isActive) Instantiate(CannotBeSelectedEffectObject, FrontCards[CannotBeBannedCard].gameObject.transform);
+                else FrontCards[CannotBeBannedCard].gameObject.transform.GetChild(0).gameObject.SetActive(false);
+                FrontCards[CannotBeBannedCard].GetComponent<BoxCollider2D>().enabled = isActive ? true : false;
+            }
+            else if(SequenceIndex == (int)GameSequenceType.OpenNonSelected)
+            {
+                if (!isActive) Instantiate(CannotBeSelectedEffectObject, FrontCards[FirstSelctedCard].gameObject.transform);
+                else FrontCards[FirstSelctedCard].gameObject.transform.GetChild(0).gameObject.SetActive(false);
+                FrontCards[FirstSelctedCard].GetComponent<BoxCollider2D>().enabled = isActive ? true : false;
+            }
+        }
+
+        public void BanSignEffect()
+        {
+            BanEffectObject.SetActive(true);
+        }
+
+        public void OpenSignEffect()
+        {
+            OpenEffectObject.SetActive(true);
+        }
+
         public void SetFrontCardState(int index, CardState cardState)
         {
             frontCardEffects[index].SetCardState(cardState);
-        }
-
-        public void SetBackCardState(int index, CardState cardState)
-        {
-            backCardEffects[index].SetCardState(cardState);
         }
 
         public void SetAllFrontCardsState(CardState cardState)
@@ -317,28 +411,18 @@ namespace RGYB
             }
         }
 
-        public void SetAllBackCardsState(CardState cardState)
-        {
-            for (int i = 0; i < backCardEffects.Count; i++)
-            {
-                SetBackCardState(i, cardState);
-            }
-        }
-
         public void CardSelected(int cardNum)
         {
-            Debug.LogFormat("SequenceIndex : {0}, CardNum : {1}", SequenceIndex, cardNum);
-
             if (SequenceIndex == (int)GameSequenceType.FirstSelect) FirstSelctedCard = cardNum;
-            else if (SequenceIndex == (int)GameSequenceType.OpenNonSelected) OpenedCard = cardNum;
             else if (SequenceIndex == (int)GameSequenceType.Ban) BannedCard = cardNum;
+            else if (SequenceIndex == (int)GameSequenceType.OpenNonSelected) OpenedCard = cardNum;
             else if (SequenceIndex == (int)GameSequenceType.SecondSelect) SecondSelectedCard = cardNum;
 
             for (int i = 0; i < frontCardEffects.Count; i++)
             {
                 if (SequenceIndex == (int)GameSequenceType.FirstSelect && i == FirstSelctedCard) continue;
-                else if (SequenceIndex == (int)GameSequenceType.OpenNonSelected && i == OpenedCard) continue;
                 else if (SequenceIndex == (int)GameSequenceType.Ban && i == BannedCard) continue;
+                else if (SequenceIndex == (int)GameSequenceType.OpenNonSelected && i == OpenedCard) continue;
                 else if (SequenceIndex == (int)GameSequenceType.SecondSelect && i == SecondSelectedCard) continue;
 
                 frontCardEffects[i].SetCardState(CardState.Selective);
@@ -354,43 +438,6 @@ namespace RGYB
             }
         }
 
-        // Not used
-        //public void SyncronizeCardEffect(int cardNum, int cardEffect)
-        //{
-        //    // Called : SecondSelect
-        //    if (IsFirstSelectPlayer)
-        //    {
-        //        if (cardEffect == (int)EffectData.None)
-        //        {
-        //            frontCardEffects[cardNum].NoneEffect();
-        //        }
-        //        else if (cardEffect == (int)EffectData.Hover)
-        //        {
-        //            frontCardEffects[cardNum].HoverEffect();
-        //        }
-        //        else if (cardEffect == (int)EffectData.Selected)
-        //        {
-        //            frontCardEffects[cardNum].SelectedEffect();
-        //        }
-        //    }
-        //    // Called : FirstSelect, OpenNonSelected, Ban
-        //    else
-        //    {
-        //        if (cardEffect == (int)EffectData.None)
-        //        {
-        //            backCardEffects[cardNum].NoneEffect();
-        //        }
-        //        else if (cardEffect == (int)EffectData.Hover)
-        //        {
-        //            backCardEffects[cardNum].HoverEffect();
-        //        }
-        //        else if (cardEffect == (int)EffectData.Selected)
-        //        {
-        //            backCardEffects[cardNum].SelectedEffect();
-        //        }
-        //    }
-        //}
-
         public int PickRandomCard()
         {
             List<int> randomPool = new List<int>();
@@ -400,8 +447,8 @@ namespace RGYB
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    if (i == FirstSelctedCard) continue;
-                    if (i == CannotBeBannedCard) continue;
+                    if (SequenceIndex == (int)GameSequenceType.Ban && i == CannotBeBannedCard) continue;
+                    if (SequenceIndex == (int)GameSequenceType.OpenNonSelected && i == FirstSelctedCard) continue;
                     randomPool.Add(i);
                 }
             }
@@ -453,7 +500,7 @@ namespace RGYB
     [System.Serializable]
     public enum GameSequenceType
     {
-        Start, FirstSelect, OpenNonSelected, Ban, SecondSelect, Result
+        Start, FirstSelect, Ban, OpenNonSelected, SecondSelect, Result
     }
 
     [System.Serializable]
