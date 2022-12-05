@@ -229,6 +229,7 @@ namespace RGYB
 
         public override void OnPlayerLeftRoom(Player other)
         {
+            if ((GameSequenceType)GameManager.Instance.SequenceIndex == GameSequenceType.Result) return;
             Debug.LogFormat("OnPlayerLeftRoom() {0}", other.NickName); // seen when other disconnects
             ExitGame();
         }

@@ -34,8 +34,11 @@ namespace RGYB
 
         private IEnumerator timer()
         {
+            GameManager.Instance.TimerImage.fillAmount = 0;
             while (PassedTime < GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
             {
+                GameManager.Instance.TimerImage.fillAmount +=
+                    0.001f / GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds;
                 PassedTime += 0.001f;
                 yield return new WaitForSecondsRealtime(0.001f);
             }

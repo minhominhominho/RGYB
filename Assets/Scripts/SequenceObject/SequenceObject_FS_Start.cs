@@ -15,7 +15,6 @@ namespace RGYB
             // Roll Game Scroll
             Vector3 origPos = GameManager.Instance.GameBoardMask.transform.position;
             Vector3 destPos = maskDestWorldPosition.position;
-            Debug.Log(destPos);
             while (GameManager.Instance.GameBoardMask.transform.position.x < destPos.x)
             {
                 GameManager.Instance.GameBoardMask.transform.position = new Vector3(

@@ -8,7 +8,6 @@ namespace RGYB
     public class SequenceObject_FS_FirstSelect : SequenceObject
     {
         private bool isSent = false;
-        private const float fadingTime = 0.5f;
 
         public override IEnumerator SequenceJob()
         {
@@ -26,15 +25,21 @@ namespace RGYB
             GameManager.Instance.SetAllFrontCardsState(CardState.Selective);
 
             // Turn on turn sign
-            GameObject tSign = GameManager.Instance.TurnSign[GameManager.Instance.IsFirstSelectPlayer ? 0 : 1];
-            tSign.SetActive(true);
-            SpriteRenderer spriteRenderer = tSign.GetComponent<SpriteRenderer>();
-            spriteRenderer.color = new Vector4(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 0);
-            while (spriteRenderer.color.a < 1)
+            GameObject tSignMask = GameManager.Instance.TurnSignMask[GameManager.Instance.IsFirstSelectPlayer ? 0 : 1];
+            GameObject tSignMaskDest = GameManager.Instance.TurnSignMaskDestPosition[GameManager.Instance.IsFirstSelectPlayer ? 0 : 1];
+            Vector3 startPos = tSignMask.transform.localPosition;
+            Vector3 destPos = tSignMaskDest.transform.localPosition;
+            while (tSignMask.transform.localPosition.y > tSignMaskDest.transform.localPosition.y + 0.01f || tSignMask.transform.localPosition.y < tSignMaskDest.transform.localPosition.y - 0.01f)
             {
-                spriteRenderer.color = new Vector4(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a + 0.01f);
-                yield return new WaitForSecondsRealtime(0.01f * fadingTime);
+                tSignMask.transform.localPosition = new Vector3(
+                     tSignMask.transform.localPosition.x,
+                      tSignMask.transform.localPosition.y + (destPos.y - startPos.y) / 100,
+                       tSignMask.transform.localPosition.z
+                    );
+                yield return new WaitForSecondsRealtime(0.01f * FadingTime);
             }
+            tSignMask.transform.localPosition = destPos;
+            tSignMaskDest.transform.localPosition = startPos;
 
             // Wait for selecting
             StartCoroutine(timer());
@@ -44,8 +49,11 @@ namespace RGYB
 
         private IEnumerator timer()
         {
+            GameManager.Instance.TimerImage.fillAmount = 0;
             while (PassedTime < GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
             {
+                GameManager.Instance.TimerImage.fillAmount +=
+                    0.001f / GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds;
                 PassedTime += 0.001f;
                 yield return new WaitForSecondsRealtime(0.001f);
             }
@@ -64,7 +72,7 @@ namespace RGYB
             }
         }
 
-        // Attached to "End turn Button" or Called when sequence timeout occured
+        // Attached to "End turn Button"
         public void EndSelection()
         {
             if (!isSent)

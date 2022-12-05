@@ -44,7 +44,8 @@ namespace RGYB
 
         [Header("Game")]
         public GameObject GameBoardMask;
-        public GameObject[] TurnSign;
+        public GameObject[] TurnSignMask;
+        public GameObject[] TurnSignMaskDestPosition;
 
         public GameObject[] FrontCards;
         public GameObject[] BackCards;
@@ -56,6 +57,8 @@ namespace RGYB
         public GameObject CannotBeSelectedEffectObject;
         public GameObject BanEffectObject;
         public GameObject OpenEffectObject;
+
+        public Image TimerImage;
 
         [Header("GameSequences")]
         [HideInInspector] public bool IsFirstSelectPlayer;
@@ -139,12 +142,6 @@ namespace RGYB
                 FrontCards[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
                 BackCards[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
             }
-
-            // Set turn sign alpha zero
-            for (int i = 0; i < TurnSign.Length; i++)
-            {
-                TurnSign[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
-            }
         }
 
         private void Start()
@@ -186,9 +183,9 @@ namespace RGYB
             return CurrentCanvasGroup == null;
         }
 
-        public void OpenSequenceCanvasGroup()
+        public void OpenSequenceCanvasGroup(bool isTimer = true)
         {
-            OpenCanvasGroup(GameSequences[SequenceIndex].CavasGroupObject, true, true);
+            OpenCanvasGroup(GameSequences[SequenceIndex].CavasGroupObject, true, true, isTimer);
         }
 
         public void OpenWrongSelectCanvasGroup()
@@ -196,7 +193,7 @@ namespace RGYB
             OpenCanvasGroup(SelectPopUpFromButtonUI, true, true);
         }
 
-        public void OpenCanvasGroup(CanvasGroup cg, bool isSequenceInfo = false, bool isFade = false)
+        public void OpenCanvasGroup(CanvasGroup cg, bool isSequenceInfo = false, bool isFade = false, bool isTimer = true)
         {
             if (CurrentCanvasGroup != null)
             {
@@ -208,7 +205,7 @@ namespace RGYB
             if (isFade)
             {
                 CurrentCanvasGroup = cg;
-                if (isSequenceInfo) StartCoroutine(sequenceCanvasTimer());
+                if (isSequenceInfo && isTimer) StartCoroutine(sequenceCanvasTimer());
                 StartCoroutine(fadeInCurrentCanvasGroup());
             }
             else
@@ -386,6 +383,12 @@ namespace RGYB
                 else FrontCards[FirstSelctedCard].gameObject.transform.GetChild(0).gameObject.SetActive(false);
                 FrontCards[FirstSelctedCard].GetComponent<BoxCollider2D>().enabled = isActive ? true : false;
             }
+            else if (SequenceIndex == (int)GameSequenceType.SecondSelect)
+            {
+                if (!isActive) Instantiate(CannotBeSelectedEffectObject, FrontCards[BannedCard].gameObject.transform);
+                else FrontCards[BannedCard].gameObject.transform.GetChild(0).gameObject.SetActive(false);
+                FrontCards[BannedCard].GetComponent<BoxCollider2D>().enabled = isActive ? true : false;
+            }
         }
 
         public void BanSignEffect()
@@ -494,7 +497,7 @@ namespace RGYB
     [System.Serializable]
     public enum GameResult
     {
-        WinAlone = 100, WinTogether = 50, LoseAlone = -100, LoseTogether = -50
+        WinAlone, WinTogether, LoseAlone, LoseTogether
     }
 
     [System.Serializable]
