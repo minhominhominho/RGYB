@@ -190,6 +190,7 @@ namespace RGYB
 
         public void OpenWrongSelectCanvasGroup()
         {
+            SoundManager.Instance.PlaySFX(SFXType.Sequece_CannotSelect);
             OpenCanvasGroup(SelectPopUpFromButtonUI, true, true);
         }
 
@@ -239,6 +240,8 @@ namespace RGYB
 
         private IEnumerator fadeInCurrentCanvasGroup()
         {
+            if ((GameSequenceType)SequenceIndex != GameSequenceType.Result && CurrentCanvasGroup != SelectPopUpFromButtonUI)
+                SoundManager.Instance.PlaySFX(SFXType.Sequece_AlertPopUpOpen);
             CurrentCanvasGroup.gameObject.SetActive(true);
             CurrentCanvasGroup.alpha = 0;
             while (CurrentCanvasGroup.alpha < 1)
@@ -251,6 +254,7 @@ namespace RGYB
 
         private IEnumerator fadeOutCurrentCanvasGroup()
         {
+            SoundManager.Instance.PlaySFX(SFXType.Sequece_AlertPopUpClose);
             while (CurrentCanvasGroup.alpha > 0)
             {
                 CurrentCanvasGroup.alpha -= 0.01f;
@@ -308,6 +312,7 @@ namespace RGYB
 
         private IEnumerator ShowEmotion(int num, bool isMine) // true -> mine
         {
+            SoundManager.Instance.PlaySFX(SFXType.Emotion);
             Image whoseEmotion = isMine ? MyEmotion : OpponentEmotion;
 
             if (isMine)
@@ -377,7 +382,7 @@ namespace RGYB
                 else FrontCards[CannotBeBannedCard].gameObject.transform.GetChild(0).gameObject.SetActive(false);
                 FrontCards[CannotBeBannedCard].GetComponent<BoxCollider2D>().enabled = isActive ? true : false;
             }
-            else if(SequenceIndex == (int)GameSequenceType.OpenNonSelected)
+            else if (SequenceIndex == (int)GameSequenceType.OpenNonSelected)
             {
                 if (!isActive) Instantiate(CannotBeSelectedEffectObject, FrontCards[FirstSelctedCard].gameObject.transform);
                 else FrontCards[FirstSelctedCard].gameObject.transform.GetChild(0).gameObject.SetActive(false);

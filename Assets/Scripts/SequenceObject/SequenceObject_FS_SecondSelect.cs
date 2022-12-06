@@ -40,6 +40,7 @@ namespace RGYB
             tSignMaskDest.transform.localPosition = startPos;
 
             // Turn on turn sign
+            SoundManager.Instance.PlaySFX(SFXType.Sequece_TurnSign);
             tSignMask = GameManager.Instance.TurnSignMask[GameManager.Instance.IsFirstSelectPlayer ? 1 : 0];
             tSignMaskDest = GameManager.Instance.TurnSignMaskDestPosition[GameManager.Instance.IsFirstSelectPlayer ? 1 : 0];
             startPos = tSignMask.transform.localPosition;

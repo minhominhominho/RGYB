@@ -21,6 +21,7 @@ namespace RGYB
             }
 
             // Turn on turn sign
+            SoundManager.Instance.PlaySFX(SFXType.Sequece_TurnSign);
             GameObject tSignMask = GameManager.Instance.TurnSignMask[GameManager.Instance.IsFirstSelectPlayer ? 0 : 1];
             GameObject tSignMaskDest = GameManager.Instance.TurnSignMaskDestPosition[GameManager.Instance.IsFirstSelectPlayer ? 0 : 1];
             Vector3 startPos = tSignMask.transform.localPosition;

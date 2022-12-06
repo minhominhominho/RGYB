@@ -7,7 +7,6 @@ namespace RGYB
 {
     public class EmotionChecker : MonoBehaviour
     {
-        // TODO : 아직 구현 못함
         public int EmotionNum;
         private bool isMouseOn = false;
         [SerializeField] private Sprite hoverImage;

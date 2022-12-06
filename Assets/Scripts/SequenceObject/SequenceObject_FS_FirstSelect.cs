@@ -25,6 +25,7 @@ namespace RGYB
             GameManager.Instance.SetAllFrontCardsState(CardState.Selective);
 
             // Turn on turn sign
+            SoundManager.Instance.PlaySFX(SFXType.Sequece_TurnSign);
             GameObject tSignMask = GameManager.Instance.TurnSignMask[GameManager.Instance.IsFirstSelectPlayer ? 0 : 1];
             GameObject tSignMaskDest = GameManager.Instance.TurnSignMaskDestPosition[GameManager.Instance.IsFirstSelectPlayer ? 0 : 1];
             Vector3 startPos = tSignMask.transform.localPosition;
@@ -49,6 +50,7 @@ namespace RGYB
 
         private IEnumerator timer()
         {
+            SoundManager.Instance.PlaySFX(SFXType.Sequece_Timer, true);
             GameManager.Instance.TimerImage.fillAmount = 0;
             while (PassedTime < GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
             {
@@ -61,6 +63,8 @@ namespace RGYB
             // If not selected until timeout
             if (!isSent)
             {
+                SoundManager.Instance.StopSFX();
+                SoundManager.Instance.PlaySFX(SFXType.Sequece_TimeOver);
                 isSent = true;
 
                 if (GameManager.Instance.FirstSelctedCard == -1)
@@ -88,6 +92,8 @@ namespace RGYB
                     return;
                 }
 
+                SoundManager.Instance.StopSFX();
+                SoundManager.Instance.PlaySFX(SFXType.Sequece_Select);
                 StopCoroutine(timer());
                 StartCoroutine(endCoroutine());
             }

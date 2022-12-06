@@ -34,6 +34,7 @@ namespace RGYB
 
         private IEnumerator timer()
         {
+            SoundManager.Instance.PlaySFX(SFXType.Sequece_Timer, true);
             GameManager.Instance.TimerImage.fillAmount = 0;
             while (PassedTime < GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
             {
@@ -46,6 +47,8 @@ namespace RGYB
             // If not selected until timeout
             if (!isSent)
             {
+                SoundManager.Instance.StopSFX();
+                SoundManager.Instance.PlaySFX(SFXType.Sequece_TimeOver);
                 isSent = true;
 
                 if (GameManager.Instance.OpenedCard == -1)
@@ -69,10 +72,12 @@ namespace RGYB
                 {
                     Debug.Log("Card not selected");
                     isSent = false;
-                    // TODO : Effect or Popup
+                    GameManager.Instance.OpenWrongSelectCanvasGroup();
                     return;
                 }
 
+                SoundManager.Instance.StopSFX();
+                SoundManager.Instance.PlaySFX(SFXType.Sequece_Select);
                 StopCoroutine(timer());
                 StartCoroutine(endCoroutine());
             }

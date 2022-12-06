@@ -13,17 +13,19 @@ namespace RGYB
         public override IEnumerator SequenceJob()
         {
             // Roll Game Scroll
+            SoundManager.Instance.PlaySFX(SFXType.GameBoard_Scroll);
             Vector3 origPos = GameManager.Instance.GameBoardMask.transform.position;
             Vector3 destPos = maskDestWorldPosition.position;
             while (GameManager.Instance.GameBoardMask.transform.position.x < destPos.x)
             {
                 GameManager.Instance.GameBoardMask.transform.position = new Vector3(
-                    GameManager.Instance.GameBoardMask.transform.position.x + (destPos.x - origPos.x) / 100, origPos.y, origPos.z
+                    GameManager.Instance.GameBoardMask.transform.position.x + (destPos.x - origPos.x) / 300, origPos.y, origPos.z
                     );
                 yield return new WaitForSecondsRealtime(0.01f * rollGameScrollTime);
             }
 
             // FadeIn Cards
+            SoundManager.Instance.PlaySFX(SFXType.Card_Create);
             List<SpriteRenderer> spr = new List<SpriteRenderer>();
 
             for (int i = 0; i < GameManager.Instance.FrontCards.Length; i++)

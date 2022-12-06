@@ -43,12 +43,14 @@ namespace RGYB
         {
             if (MyState == CardState.Selective)
             {
+                SoundManager.Instance.PlaySFX(SFXType.Card_Select);
                 MyState = CardState.Selected;
                 SelectedEffect();
                 GameManager.Instance.CardSelected(CardNum);
             }
             else if (MyState == CardState.Selected)
             {
+                SoundManager.Instance.PlaySFX(SFXType.Card_Select);
                 MyState = CardState.Selective;
                 NoneEffect();
                 GameManager.Instance.CardSelected(-1);

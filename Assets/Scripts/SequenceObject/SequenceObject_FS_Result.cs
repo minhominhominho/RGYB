@@ -18,6 +18,8 @@ namespace RGYB
                 = GameManager.Instance.CardSprites[GameManager.Instance.SecondSelectedCard];
             OpponentCard.GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 255);
 
+            // Card Open
+            SoundManager.Instance.PlaySFX(SFXType.Card_Open);
             float rot = 0;
             while (rot < 180)
             {

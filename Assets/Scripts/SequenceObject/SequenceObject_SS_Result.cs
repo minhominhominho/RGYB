@@ -20,6 +20,8 @@ namespace RGYB
                = GameManager.Instance.CardSprites[GameManager.Instance.FirstSelctedCard];
             OpponentCard.GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 255);
 
+            // Card Open
+            SoundManager.Instance.PlaySFX(SFXType.Card_Open);
             float rot = 0;
             while (rot < 180)
             {
@@ -36,6 +38,9 @@ namespace RGYB
             else if (gs == GameResult.WinTogether) resultText.text = "공동 승리!";
             else if (gs == GameResult.LoseAlone) resultText.text = "단독 패배..";
             else if (gs == GameResult.LoseTogether) resultText.text = "공동 패배..";
+
+            if (gs == GameResult.WinAlone || gs == GameResult.WinTogether)
+                SoundManager.Instance.PlaySFX(SFXType.Sequece_Victory);
 
             // Open Canvas Group
             GameManager.Instance.OpenSequenceCanvasGroup(false);
