@@ -17,7 +17,7 @@ namespace RGYB
 
             while (!GameManager.Instance.CheckPanelClosed())
             {
-                yield return new WaitForSecondsRealtime(0.01f);
+                yield return NormalWait;
             }
 
             // Turn on turn sign
@@ -30,10 +30,10 @@ namespace RGYB
             {
                 tSignMask.transform.localPosition = new Vector3(
                      tSignMask.transform.localPosition.x,
-                      tSignMask.transform.localPosition.y + (destPos.y - startPos.y) / 100,
+                      tSignMask.transform.localPosition.y + (destPos.y - startPos.y) / 20,
                        tSignMask.transform.localPosition.z
                     );
-                yield return new WaitForSecondsRealtime(0.01f * FadingTime);
+                yield return FadeWait;
             }
             tSignMask.transform.localPosition = destPos;
             tSignMaskDest.transform.localPosition = startPos;
@@ -42,14 +42,14 @@ namespace RGYB
             while (GameManager.Instance.FirstSelctedCard == -1)
             {
                 PassedTime += 0.001f;
-                yield return new WaitForSecondsRealtime(0.001f);
+                yield return ServerWait;
             }
 
             if (PassedTime + ExtraTimeForReciever > GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds)
                 Debug.LogError("TimeOut : Something bad happens");
 
             GameManager.Instance.SetSubmit(0, 4);
-            yield return new WaitForSecondsRealtime(0.5f);
+            yield return new WaitForSeconds(0.5f);
 
             EndMySequence(new object[] { });
         }

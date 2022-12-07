@@ -13,6 +13,11 @@ namespace RGYB
         [HideInInspector] public float PassedTime;
         [HideInInspector] public const float ExtraTimeForReciever = 3.0f;
         [HideInInspector] public const float FadingTime = 0.5f;
+        [HideInInspector] public const float RollGameScrollTime = 0.5f;
+        [HideInInspector] public WaitForSeconds NormalWait = new WaitForSeconds(0.01f);
+        [HideInInspector] public WaitForSeconds ServerWait = new WaitForSeconds(0.001f);
+        [HideInInspector] public WaitForSeconds ScrollWait = new WaitForSeconds(0.05f * RollGameScrollTime);
+        [HideInInspector] public WaitForSeconds FadeWait = new WaitForSeconds(0.05f * FadingTime);
 
 
         public virtual void CallMySequence(int order)
@@ -27,7 +32,7 @@ namespace RGYB
         public virtual IEnumerator SequenceJob()
         {
             Debug.Log("SequenceJob()");
-            yield return new WaitForSecondsRealtime(3);
+            yield return new WaitForSeconds(3);
             EndMySequence(new object[] { });
         }
 
@@ -43,7 +48,7 @@ namespace RGYB
             Debug.Log("CheckOpponentSequence()");
             while (MyOrder != GameManager.Instance.OpponentOrder)
             {
-                yield return new WaitForSecondsRealtime(0.01f);
+                yield return NormalWait;
             }
             EndSequence();
         }
@@ -54,12 +59,6 @@ namespace RGYB
             Debug.Log("EndSequence()");
             GameManager.Instance.CallNextSequence();
             this.gameObject.SetActive(false);
-        }
-
-        public IEnumerator Timer(float time)
-        {
-            // TODO : 빨간줄 타는 효과 구현
-            yield return new WaitForSecondsRealtime(0);
         }
     }
 }

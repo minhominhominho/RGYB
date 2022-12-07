@@ -16,7 +16,7 @@ namespace RGYB
 
             while (!GameManager.Instance.CheckPanelClosed())
             {
-                yield return new WaitForSecondsRealtime(0.01f);
+                yield return NormalWait;
             }
 
             GameManager.Instance.SetActiveFakeSelectButton(false);
@@ -41,7 +41,7 @@ namespace RGYB
                 GameManager.Instance.TimerImage.fillAmount +=
                     0.001f / GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds;
                 PassedTime += 0.001f;
-                yield return new WaitForSecondsRealtime(0.001f);
+                yield return ServerWait;
             }
 
             // If not selected until timeout
@@ -94,9 +94,9 @@ namespace RGYB
             GameManager.Instance.ResetFrontCards();
 
             GameManager.Instance.SetSubmit(2, GameManager.Instance.OpenedCard);
-            yield return new WaitForSecondsRealtime(0.5f);
+            yield return new WaitForSeconds(0.5f);
             GameManager.Instance.OpenSignEffect();
-            yield return new WaitForSecondsRealtime(0.5f);
+            yield return new WaitForSeconds(0.5f);
 
             EndMySequence(new object[] { GameManager.Instance.OpenedCard });
             yield return null;

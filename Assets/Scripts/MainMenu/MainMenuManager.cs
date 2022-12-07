@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System;
+using Unity.VisualScripting;
 
 namespace RGYB
 {
     public class MainMenuManager : MonoBehaviour
     {
         public static MainMenuManager Instance = null;
+        private WaitForSeconds waitTime = new WaitForSeconds(0.05f);
 
         [SerializeField] private GameObject[] MainMenuPanels;
         [SerializeField] private GameObject[] CustomMatchPanel;
@@ -19,15 +22,31 @@ namespace RGYB
         [SerializeField] private Toggle IsRandomRole;
         [SerializeField] private Toggle IsFirstSelect;
 
-        public void test()
-        {
-            Debug.Log(PhotonManager.Instance.GetRoomName());
-        }
+        [SerializeField] private Image LogoImage;
+
 
         private void Awake()
         {
             Instance = this.GetComponent<MainMenuManager>();
             PhotonManager.Instance.ConnectPhotonServer();
+        }
+
+        public void StartGame()
+        {
+            StartCoroutine(OpeningLogo());
+        }
+
+        private IEnumerator OpeningLogo()
+        {
+            LogoImage.gameObject.SetActive(true);
+            Color c = LogoImage.color;
+            while (LogoImage.color.a > 0)
+            {
+                c.a -= 0.05f;
+                LogoImage.color = c;
+                yield return waitTime;
+            }
+            LogoImage.gameObject.SetActive(false);
         }
 
         public void ShowMainMenuPanel(int index)

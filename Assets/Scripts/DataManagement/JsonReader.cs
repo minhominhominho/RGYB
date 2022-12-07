@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace RGYB {
+namespace RGYB
+{
     public class JsonReader
     {
         public static GameSequence[] ReadSequence()

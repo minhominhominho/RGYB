@@ -16,6 +16,7 @@ namespace RGYB
     {
         public static PhotonManager instance = null;
         private static GameObject goInstance = null;
+        private WaitForSeconds wait = new WaitForSeconds(0.01f);
         public static PhotonManager Instance
         {
             get
@@ -135,7 +136,7 @@ namespace RGYB
             while (timeOutCount <= timeOut && PhotonNetwork.NetworkClientState == ClientState.Leaving)
             {
                 timeOutCount += 0.1f;
-                yield return new WaitForSecondsRealtime(0.1f);
+                yield return wait;
             }
 
             if (timeOutCount >= timeOut)

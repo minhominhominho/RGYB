@@ -17,6 +17,8 @@ namespace RGYB
     public class GameManager : MonoBehaviour
     {
         public static GameManager Instance;
+        private WaitForSeconds normalWait = new WaitForSeconds(0.01f);
+        private WaitForSeconds fadingWait = new WaitForSeconds(0.05f * CanvasGroupFadingTime);
 
         // To be deleted
         public TextMeshProUGUI RoomName;
@@ -24,7 +26,7 @@ namespace RGYB
         // To be deleted
 
         [Header("UI")]
-        [SerializeField] private float CanvasGroupFadingTime = 0.5f;
+        [SerializeField] private const float CanvasGroupFadingTime = 0.5f;
         [SerializeField] private float CanvasGroupShownTime = 5f;
         [HideInInspector] public CanvasGroup CurrentCanvasGroup = null;
         private bool isClosingCurrentCanvasGroup = false;
@@ -246,8 +248,8 @@ namespace RGYB
             CurrentCanvasGroup.alpha = 0;
             while (CurrentCanvasGroup.alpha < 1)
             {
-                CurrentCanvasGroup.alpha += 0.01f;
-                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+                CurrentCanvasGroup.alpha += 0.05f;
+                yield return fadingWait;
             }
             CurrentCanvasGroup.interactable = true;
         }
@@ -257,8 +259,8 @@ namespace RGYB
             SoundManager.Instance.PlaySFX(SFXType.Sequece_AlertPopUpClose);
             while (CurrentCanvasGroup.alpha > 0)
             {
-                CurrentCanvasGroup.alpha -= 0.01f;
-                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+                CurrentCanvasGroup.alpha -= 0.05f;
+                yield return fadingWait;
             }
             CurrentCanvasGroup.interactable = false;
             CurrentCanvasGroup.alpha = 0;
@@ -276,7 +278,7 @@ namespace RGYB
             while (CanvasGroupShownTime > passedTime && CurrentCanvasGroup != null)
             {
                 passedTime += 0.01f;
-                yield return new WaitForSecondsRealtime(0.01f);
+                yield return normalWait;
             }
 
             if (CanvasGroupShownTime <= passedTime) CloseCurrentCanvasGroup(true);
@@ -326,14 +328,14 @@ namespace RGYB
             whoseEmotion.color = new Vector4(255, 255, 255, 0);
             while (whoseEmotion.color.a < 1)
             {
-                whoseEmotion.color = new Vector4(255, 255, 255, whoseEmotion.color.a + 0.01f);
-                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+                whoseEmotion.color = new Vector4(255, 255, 255, whoseEmotion.color.a + 0.05f);
+                yield return fadingWait;
             }
-            yield return new WaitForSecondsRealtime(2f);
+            yield return new WaitForSeconds(2f);
             while (whoseEmotion.color.a > 0)
             {
-                whoseEmotion.color = new Vector4(255, 255, 255, whoseEmotion.color.a - 0.01f);
-                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+                whoseEmotion.color = new Vector4(255, 255, 255, whoseEmotion.color.a - 0.05f);
+                yield return fadingWait;
             }
             whoseEmotion.color = new Vector4(255, 255, 255, 0);
 
@@ -341,8 +343,8 @@ namespace RGYB
             {
                 while (EmotionButton.color.a < 1)
                 {
-                    EmotionButton.color = new Vector4(255, 255, 255, EmotionButton.color.a + 0.01f);
-                    yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+                    EmotionButton.color = new Vector4(255, 255, 255, EmotionButton.color.a + 0.05f);
+                    yield return fadingWait;
                 }
                 EmotionButton.color = new Vector4(255, 255, 255, 255);
                 EmotionButton.gameObject.GetComponent<CircleCollider2D>().enabled = true;
@@ -369,8 +371,8 @@ namespace RGYB
         {
             while (Submits[submit].color.a < 1)
             {
-                Submits[submit].color = new Vector4(255, 255, 255, Submits[submit].color.a + 0.01f);
-                yield return new WaitForSecondsRealtime(0.01f * CanvasGroupFadingTime);
+                Submits[submit].color = new Vector4(255, 255, 255, Submits[submit].color.a + 0.05f);
+                yield return fadingWait;
             }
         }
 

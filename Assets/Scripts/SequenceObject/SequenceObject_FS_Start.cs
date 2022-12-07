@@ -7,7 +7,6 @@ namespace RGYB
 {
     public class SequenceObject_FS_Start : SequenceObject
     {
-        [SerializeField] private const float rollGameScrollTime = 1f;
         [SerializeField] private Transform maskDestWorldPosition;
 
         public override IEnumerator SequenceJob()
@@ -19,9 +18,9 @@ namespace RGYB
             while (GameManager.Instance.GameBoardMask.transform.position.x < destPos.x)
             {
                 GameManager.Instance.GameBoardMask.transform.position = new Vector3(
-                    GameManager.Instance.GameBoardMask.transform.position.x + (destPos.x - origPos.x) / 300, origPos.y, origPos.z
+                    GameManager.Instance.GameBoardMask.transform.position.x + (destPos.x - origPos.x) / 100, origPos.y, origPos.z
                     );
-                yield return new WaitForSecondsRealtime(0.01f * rollGameScrollTime);
+                yield return ScrollWait;
             }
 
             // FadeIn Cards
@@ -40,9 +39,9 @@ namespace RGYB
             {
                 foreach (SpriteRenderer s in spr)
                 {
-                    s.color = new Vector4(s.color.r, s.color.g, s.color.b, s.color.a + 0.01f);
+                    s.color = new Vector4(s.color.r, s.color.g, s.color.b, s.color.a + 0.05f);
                 }
-                yield return new WaitForSecondsRealtime(0.01f * FadingTime);
+                yield return FadeWait;
             }
 
             // Call Next Sequence

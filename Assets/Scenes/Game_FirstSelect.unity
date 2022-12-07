@@ -178,7 +178,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 284591700}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 22.27, y: 0, z: 0.1}
+  m_LocalPosition: {x: 24, y: 0, z: 0.1}
   m_LocalScale: {x: 1.4508, y: 1.4508, z: 1.4508}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -711,6 +711,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MyOrder: 0
   PassedTime: 0
+--- !u!114 &535128871 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8712164395996550542, guid: fe05ce4372d3d7c4ca222d5d7428edbe, type: 3}
+  m_PrefabInstance: {fileID: 9027211850248710679}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &642785803 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 912060084004397690, guid: fe05ce4372d3d7c4ca222d5d7428edbe, type: 3}
@@ -2130,6 +2141,7 @@ MonoBehaviour:
   MyOrder: 0
   PassedTime: 0
   resultText: {fileID: 740462158}
+  scoreText: {fileID: 535128871}
   Card: {fileID: 1411519362}
   OpponentCard: {fileID: 1411519361}
 --- !u!114 &2034554769 stripped
@@ -2319,7 +2331,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4388983655856388898, guid: 97de5cf8c13554c4590023b1f3ba0a10, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4388983655856388908, guid: 97de5cf8c13554c4590023b1f3ba0a10, type: 3}
       propertyPath: m_FrontSortingLayer

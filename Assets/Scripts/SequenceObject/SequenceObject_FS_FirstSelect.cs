@@ -16,7 +16,7 @@ namespace RGYB
 
             while (!GameManager.Instance.CheckPanelClosed())
             {
-                yield return new WaitForSecondsRealtime(0.01f);
+                yield return NormalWait;
             }
 
             GameManager.Instance.SetActiveFakeSelectButton(false);
@@ -34,10 +34,10 @@ namespace RGYB
             {
                 tSignMask.transform.localPosition = new Vector3(
                      tSignMask.transform.localPosition.x,
-                      tSignMask.transform.localPosition.y + (destPos.y - startPos.y) / 100,
+                      tSignMask.transform.localPosition.y + (destPos.y - startPos.y) / 20,
                        tSignMask.transform.localPosition.z
                     );
-                yield return new WaitForSecondsRealtime(0.01f * FadingTime);
+                yield return FadeWait;
             }
             tSignMask.transform.localPosition = destPos;
             tSignMaskDest.transform.localPosition = startPos;
@@ -57,7 +57,7 @@ namespace RGYB
                 GameManager.Instance.TimerImage.fillAmount +=
                     0.001f / GameManager.Instance.GameSequences[(int)MyOrder].FullSequenceSeconds;
                 PassedTime += 0.001f;
-                yield return new WaitForSecondsRealtime(0.001f);
+                yield return ServerWait;
             }
 
             // If not selected until timeout
@@ -110,7 +110,7 @@ namespace RGYB
 
             GameManager.Instance.SetSubmit(3, GameManager.Instance.FirstSelctedCard);
 
-            yield return new WaitForSecondsRealtime(0.5f);
+            yield return new WaitForSeconds(0.5f);
 
             EndMySequence(new object[] { GameManager.Instance.FirstSelctedCard });
             yield return null;
