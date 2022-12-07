@@ -6,19 +6,19 @@
         },
         {
             "stringGameSequenceType": "FirstSelect",
-            "FullSequenceSeconds": 60
+            "FullSequenceSeconds": 30
         },
         {
             "stringGameSequenceType": "Ban",
-            "FullSequenceSeconds": 60
+            "FullSequenceSeconds": 30
         },
         {
             "stringGameSequenceType": "OpenNonSelected",
-            "FullSequenceSeconds": 60
+            "FullSequenceSeconds": 30
         },
         {
             "stringGameSequenceType": "SecondSelect",
-            "FullSequenceSeconds": 60
+            "FullSequenceSeconds": 30
         },
         {
             "stringGameSequenceType": "Result",

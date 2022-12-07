@@ -20,11 +20,6 @@ namespace RGYB
         private WaitForSeconds normalWait = new WaitForSeconds(0.01f);
         private WaitForSeconds fadingWait = new WaitForSeconds(0.05f * CanvasGroupFadingTime);
 
-        // To be deleted
-        public TextMeshProUGUI RoomName;
-        public TextMeshProUGUI SequenceNum;
-        // To be deleted
-
         [Header("UI")]
         [SerializeField] private const float CanvasGroupFadingTime = 0.5f;
         [SerializeField] private float CanvasGroupShownTime = 5f;
@@ -124,7 +119,6 @@ namespace RGYB
 
             // TO be on!!!!!
             IsFirstSelectPlayer = PhotonManager.Instance.IsFirstSelectPlayer();
-            RoomName.text = PhotonManager.Instance.GetRoomName();
 
             SetGameEnvironment();
         }
@@ -166,7 +160,6 @@ namespace RGYB
             }
 
             SequenceIndex++;
-            SequenceNum.text = $"Sequence {SequenceIndex} : {GameSequences[SequenceIndex].MyGameSequenceType}";
 
             Debug.LogFormat("SequenceIndex : {0}, SequenceType : {1}", SequenceIndex, GameSequences[SequenceIndex].MyGameSequenceType);
             GameSequences[SequenceIndex].MySequenceObject.CallMySequence(SequenceIndex);
