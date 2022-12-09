@@ -518,7 +518,7 @@ PrefabInstance:
     - target: {fileID: 4993632154595411553, guid: bb63c9aeed468464ca6d04403f5a84e7, type: 3}
       propertyPath: bgmAudioClip
       value: 
-      objectReference: {fileID: 8300000, guid: 0de929f88f061e949adff15616c7f836, type: 3}
+      objectReference: {fileID: 8300000, guid: cc25d2f42bef2e743890f8ce5e75ff6a, type: 3}
     - target: {fileID: 4993632154595411553, guid: bb63c9aeed468464ca6d04403f5a84e7, type: 3}
       propertyPath: bgmAudioSlider
       value: 

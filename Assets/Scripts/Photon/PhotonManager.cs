@@ -36,6 +36,7 @@ namespace RGYB
         [SerializeField] private const string gameVersion = "1";
         [SerializeField] private const float timeOut = 10;
         private bool isExitCalled = false;
+        private string reservedScene;
 
 
         #region Public Methods
@@ -66,10 +67,13 @@ namespace RGYB
             Debug.Log("CheckAndLeaveRoom()");
 
             if (PhotonNetwork.CurrentRoom != null)
+            {
                 PhotonNetwork.LeaveRoom();
+                reservedScene = null;
+            }
         }
 
-        public void CreateRoom(bool isCustom, string customRoomName = null, string customPassword = null, bool isRandomRole = true, bool masterIsFirstSelect = true)
+        public void CreateRoom(bool isPrivate, string customRoomName = null, string customPassword = null, bool isRandomRole = true, bool masterIsFirstSelect = true)
         {
             CheckAndLeaveRoom();
 
@@ -80,19 +84,20 @@ namespace RGYB
             int role = isRandomRole ? UnityEngine.Random.Range(0, 2) : (masterIsFirstSelect ? 1 : 0);
             roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable() { { "Role", role } };
 
-            if (isCustom)
+            if (isPrivate)
             {
                 roomName += customRoomName + "_" + customPassword;
                 roomOptions.IsVisible = false;
             }
             else
             {
-                roomName += "RoomName_" + UnityEngine.Random.Range(0, 5000).ToString();
+                if (customRoomName != null) roomName += customRoomName;
+                else roomName += "RandomRoom_" + UnityEngine.Random.Range(0, 5000).ToString();
                 roomOptions.IsVisible = true;
             }
 
             PhotonNetwork.CreateRoom(roomName, roomOptions, null);
-            Debug.LogFormat("Create{0}Room() : {1}, {2}", (isCustom ? "Custom" : "Random"), roomName, role == 1 ? "Master First Select" : "Master Second Select");
+            Debug.LogFormat("Create{0}Room() : {1}, {2}", (isPrivate ? "Custom" : "Random"), roomName, role == 1 ? "Master First Select" : "Master Second Select");
         }
 
         public void JoinRandomRoom()
@@ -198,9 +203,33 @@ namespace RGYB
                 Debug.LogFormat("OnPlayerEnteredRoom IsMasterClient {0}", PhotonNetwork.IsMasterClient); // called before OnPlayerLeftRoom
                 Debug.LogFormat("Loading Game Scene");
                 int role = (int)PhotonNetwork.CurrentRoom.CustomProperties["Role"];
-                PhotonNetwork.LoadLevel("Game_" + ((1 - role) == 1 ? "FirstSelect" : "SecondSelect"));
+                reservedScene = "Game_" + ((1 - role) == 1 ? "FirstSelect" : "SecondSelect");
             }
         }
+
+        public bool IsSceneReserved()
+        {
+            return reservedScene!= null;
+        }
+
+        public void LoadLevel()
+        {
+            if (reservedScene == null)
+            {
+                Debug.LogError("Something wrong!!");
+                return;
+            }
+
+            StartCoroutine(waitFadeBeforeLoadLevel());
+        }
+
+        private IEnumerator waitFadeBeforeLoadLevel()
+        {
+            MenuManager.Instance.FadeInBlack();
+            yield return new WaitForSeconds(1f);
+            PhotonNetwork.LoadLevel(reservedScene);
+        }
+
 
         public override void OnJoinRandomFailed(short returnCode, string message)
         {
@@ -212,7 +241,7 @@ namespace RGYB
         public override void OnJoinRoomFailed(short returnCode, string message)
         {
             Debug.Log("OnJoinRoomFailed()");
-            MainMenuManager.Instance.FailToJoinCustomRoom();
+            MenuManager.Instance.FailToJoinCustomRoom();
         }
 
         public override void OnPlayerEnteredRoom(Player other)
@@ -224,7 +253,7 @@ namespace RGYB
                 Debug.LogFormat("OnPlayerEnteredRoom IsMasterClient {0}", PhotonNetwork.IsMasterClient); // called before OnPlayerLeftRoom
                 Debug.LogFormat("Loading Game Scene");
                 int role = (int)PhotonNetwork.CurrentRoom.CustomProperties["Role"];
-                PhotonNetwork.LoadLevel("Game_" + (role == 1 ? "FirstSelect" : "SecondSelect"));
+                reservedScene = "Game_" + (role == 1 ? "FirstSelect" : "SecondSelect");
             }
         }
 

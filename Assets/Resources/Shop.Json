@@ -1,0 +1,64 @@
+{
+    "Shops": [
+        {
+            "Type": "CardSkin",
+            "Name": "Black",
+            "Price": 100,
+            "IsBought": 0
+        },
+        {
+            "Type": "CardSkin",
+            "Name": "OrangeFrame",
+            "Price": 100,
+            "IsBought": 0
+        },
+        {
+            "Type": "CardSkin",
+            "Name": "Prizm",
+            "Price": 100,
+            "IsBought": 0
+        },
+        {
+            "Type": "CardSkin",
+            "Name": "Select",
+            "Price": 100,
+            "IsBought": 0
+        },
+        {
+            "Type": "Portrait",
+            "Name": "Blue",
+            "Price": 100,
+            "IsBought": 0
+        },
+        {
+            "Type": "Portrait",
+            "Name": "Green",
+            "Price": 100,
+            "IsBought": 0
+        },
+        {
+            "Type": "Portrait",
+            "Name": "Orange",
+            "Price": 100,
+            "IsBought": 0
+        },
+        {
+            "Type": "Portrait",
+            "Name": "Red",
+            "Price": 100,
+            "IsBought": 0
+        },
+        {
+            "Type": "Title",
+            "Name": "<color=#C3BD3A>Legend</color>",
+            "Price": 100,
+            "IsBought": 0
+        },
+        {
+            "Type": "Title",
+            "Name": "<color=#5F64F8>BlueBird</color>",
+            "Price": 100,
+            "IsBought": 0
+        }
+    ]
+}

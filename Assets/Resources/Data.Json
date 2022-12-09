@@ -1,5 +1,11 @@
 {
+    "CardSkin": "Standard",
+    "Portrait": "Standard",
+    "NickName": "Minho",
+    "Title": "<color=#A0BF7F>초심자</color>",
+    "Credit": 1000,
     "Score": 2000,
-    "Credit": 0,
-    "LastLoginString": "2022/12/07"
+    "Gender": "None",
+    "MBTI": "None",
+    "Tendency": "None"
 }

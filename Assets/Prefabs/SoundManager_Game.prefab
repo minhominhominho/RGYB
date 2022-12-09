@@ -178,8 +178,10 @@ MonoBehaviour:
   SFXSpeaker: {fileID: 6351216634287427537}
   masterMixer: {fileID: 24100000, guid: 7e97aa06e7696dc428aab11433ca46e4, type: 2}
   bgmAudioSlider: {fileID: 0}
+  bgmAudioToggle: {fileID: 0}
   sfxAudioSlider: {fileID: 0}
-  bgmAudioClip: {fileID: 0}
+  sfxAudioToggle: {fileID: 0}
+  bgmAudioClip: {fileID: 8300000, guid: cc25d2f42bef2e743890f8ce5e75ff6a, type: 3}
   sfxAudioList:
   - Type: 0
     Clip: {fileID: 8300000, guid: e16297821b20e1e48afdf688c201bfba, type: 3}

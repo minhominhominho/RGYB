@@ -53,7 +53,7 @@ MonoBehaviour:
   bgmAudioToggle: {fileID: 0}
   sfxAudioSlider: {fileID: 0}
   sfxAudioToggle: {fileID: 0}
-  bgmAudioClip: {fileID: 0}
+  bgmAudioClip: {fileID: 8300000, guid: cc25d2f42bef2e743890f8ce5e75ff6a, type: 3}
   sfxAudioList:
   - Type: 0
     Clip: {fileID: 8300000, guid: e16297821b20e1e48afdf688c201bfba, type: 3}

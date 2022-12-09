@@ -514,7 +514,6 @@ namespace RGYB
         public CanvasGroup CavasGroupObject;
         public SequenceObject MySequenceObject;
         public float FullSequenceSeconds;
-        // public GameObject[] CardPositions;
 
         public void Mapping()
         {
