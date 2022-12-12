@@ -30,4 +30,4 @@ Unity를 이용하여 Client를 구현하였고, 로비, 게임 동기화 등의
 
 
 #### 🎞️ 게임 플레이 영상
-[![Play Video](https://img.youtube.com/vi/zytNx__qd9o/0.jpg)](https://youtu.be/zytNx__qd9o)
+[![Play Video](https://img.youtube.com/vi/zytNx__qd9o/0.jpg)](https://www.youtube.com/watch?v=zytNx__qd9o)
