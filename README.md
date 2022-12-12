@@ -1,4 +1,4 @@
 # RGYB
-#### 모바일 1:1 카드 게임
+모바일 1:1 카드 게임
 [![Play Video](https://img.youtube.com/vi/zytNx__qd9o/0.jpg)](https://youtu.be/zytNx__qd9o)
-<iframe width="711" height="400" src="https://www.youtube.com/embed/zytNx__qd9o" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+##프로젝트 소개
