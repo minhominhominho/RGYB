@@ -28,6 +28,7 @@ Unity를 이용하여 Client를 구현하였고, 로비, 게임 동기화 등의
 #### 🃏 게임 규칙
 ![image](https://user-images.githubusercontent.com/71825731/206973230-36a6e571-0199-437b-9092-69a0251f2dfb.png)
 
+<br>
 
 #### 🎞️ 게임 플레이 영상
 [![Play Video](https://img.youtube.com/vi/zytNx__qd9o/0.jpg)](https://www.youtube.com/watch?v=zytNx__qd9o)
