@@ -7,6 +7,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEngine.Analytics;
 using UnityEngine.SocialPlatforms.Impl;
+using System.Reflection;
 
 namespace RGYB
 {
@@ -79,7 +80,6 @@ namespace RGYB
         [SerializeField] private CanvasGroup Custom_CreateGameCanvasGroup;
         [SerializeField] private CanvasGroup Custom_EnterRoomNameAlretPanel;
 
-
         [SerializeField] private Sprite Custom_Sprite;
         [SerializeField] private CanvasGroup Custom_WaitRoomCanvasGroup;
         [SerializeField] private TextMeshProUGUI Custom_RoomNameText;
@@ -90,15 +90,44 @@ namespace RGYB
         [SerializeField] private TextMeshProUGUI Custom_GameModeText;
         [SerializeField] private TextMeshProUGUI Custom_RoleModeText;
 
+        [SerializeField] private CanvasGroup Custom_SearchGameCanvasGroup;
+
+        [SerializeField] private CanvasGroup Custom_DirectJoinCanvasGroup;
+        [SerializeField] private CanvasGroup Custom_EnterRoomNameAlretPanel2;
+        [SerializeField] private TextMeshProUGUI Custom_EnterRoomNameAlretPanel2Text;
         [SerializeField] private TMP_InputField JoinCustomRoomName;
         [SerializeField] private TMP_InputField JoinCustomRoomPassword;
-        //[Header("Stat")]
-        //[Header("Profile")]
-        //[Header("Shop")]
+
+        [Header("Stat")]
+
+        [Header("Profile")]
+        [SerializeField] private CanvasGroup[] Profile_OutsideCanvasGroup;
+        [SerializeField] private CanvasGroup[] Profile_InsideCanvasGroup;
+
+        [SerializeField] private Image Profile_PortraitImage;
+        [SerializeField] private Image[] Profile_PortraitSelectImage;
+        [SerializeField] private GameObject[] Profile_PortraitButtons;
+
+        [SerializeField] private TextMeshProUGUI Profile_NickNameText;
+        [SerializeField] private TMP_InputField Profile_NickName;
+
+        [SerializeField] private TextMeshProUGUI Profile_ShownTitleText;
+        [SerializeField] private TextMeshProUGUI[] Profile_TitleText;
+
+        [SerializeField] private TextMeshProUGUI Profile_ScoreText;
+
+
+        [Header("Shop")]
+        [SerializeField] private TextMeshProUGUI Shop_CreditText;
         //[Header("Option")]
         //[Header("Exit")]
 
 
+
+        public Menu GetPrevMenu()
+        {
+            return prevMenu;
+        }
 
         private void Awake()
         {
@@ -151,12 +180,17 @@ namespace RGYB
             Matching_ScoreText.text = "점수 : " + DataManager.Instance.GetScore().ToString();
 
             // Shop
-
+            Shop_CreditText.text = DataManager.Instance.GetCredit().ToString();
 
         }
 
         public void SetFront(Menu menu)
         {
+            #region Initialize Hone Panel
+            if (menu == Menu.Home)
+                SetData();
+            #endregion
+
             #region Initialize Matching Panel
             if (prevMenu == Menu.Matching)
             {
@@ -191,6 +225,10 @@ namespace RGYB
                 Custom_CreateGameCanvasGroup.interactable = false;
                 Custom_CreateGameCanvasGroup.alpha = 0;
 
+                Custom_SearchGameCanvasGroup.gameObject.SetActive(false);
+                Custom_SearchGameCanvasGroup.interactable = false;
+                Custom_SearchGameCanvasGroup.alpha = 0;
+
                 Custom_CreateCustomRoomName.text = "";
                 Custom_CreateCustomRoomPassword.text = "";
 
@@ -200,10 +238,39 @@ namespace RGYB
                 Custom_WaitRoomCanvasGroup.interactable = false;
                 Custom_WaitRoomCanvasGroup.alpha = 0;
 
+
+                Custom_DirectJoinCanvasGroup.gameObject.SetActive(false);
+                Custom_DirectJoinCanvasGroup.interactable = false;
+                Custom_DirectJoinCanvasGroup.alpha = 0;
+
+                Custom_EnterRoomNameAlretPanel2.gameObject.SetActive(false);
+                Custom_EnterRoomNameAlretPanel2.interactable = false;
+                Custom_EnterRoomNameAlretPanel2.alpha = 0;
+                Custom_EnterRoomNameAlretPanel2Text.text = null;
+                JoinCustomRoomName.text = null;
+                JoinCustomRoomPassword.text = null;
+
                 PhotonManager.Instance.CheckAndLeaveRoom();
             }
             #endregion
 
+            #region Initialize Profile Panel
+            if (menu == Menu.Profile)
+            {
+                Profile_PortraitImage.sprite = DataManager.Instance.GetPortrait();
+                Profile_NickName.text = DataManager.Instance.GetNickName();
+                Profile_NickNameText.text = DataManager.Instance.GetNickName();
+                Profile_ShownTitleText.text = DataManager.Instance.GetTitle();
+                Profile_ScoreText.text = "점수 : " + DataManager.Instance.GetScore().ToString();
+            }
+            if (prevMenu == Menu.Profile)
+            {
+                ProfileResetCanvasGroup();
+            }
+
+            #endregion
+
+            
 
             // Move Cards (roll)
             for (int i = 0; i < CanvasObject.Length; i++)
@@ -326,7 +393,6 @@ namespace RGYB
 
         #endregion
 
-
         #region Custom
 
         public void CustomGamePanelButton(bool isCreate)
@@ -395,16 +461,17 @@ namespace RGYB
             Custom_IconTargetObject.transform.position = iconDestPos;
 
             // 3. FadeIn CanvasGroup
-            Custom_CreateGameCanvasGroup.gameObject.SetActive(true);
-            Custom_CreateGameCanvasGroup.interactable = false;
-            Custom_CreateGameCanvasGroup.alpha = 0;
-            while (Custom_CreateGameCanvasGroup.alpha < 1)
+            CanvasGroup cgcg = isCreate ? Custom_CreateGameCanvasGroup : Custom_SearchGameCanvasGroup;
+            cgcg.gameObject.SetActive(true);
+            cgcg.interactable = false;
+            cgcg.alpha = 0;
+            while (cgcg.alpha < 1)
             {
-                Custom_CreateGameCanvasGroup.alpha += 0.05f;
+                cgcg.alpha += 0.05f;
                 yield return fadeWait;
             }
-            Custom_CreateGameCanvasGroup.alpha = 1;
-            Custom_CreateGameCanvasGroup.interactable = true;
+            cgcg.alpha = 1;
+            cgcg.interactable = true;
         }
 
         public void CustomSetClosedToggle()
@@ -489,6 +556,7 @@ namespace RGYB
                 Custom_Player2RoleText.text = "출제자";
                 Custom_RoleModeText.text = "지정 역할";
             }
+            Custom_Player1NicknameText.text = null;
             Custom_Player1NicknameText.text = DataManager.Instance.GetNickName();
             Custom_GameModeText.text = Custom_CreateIsClassic ? "클래식" : "하드코어";
 
@@ -521,6 +589,7 @@ namespace RGYB
             if (isFadein)
             {
                 cg.gameObject.SetActive(true);
+                cg.interactable = false;
                 cg.alpha = 0;
                 while (cg.alpha < 1)
                 {
@@ -529,9 +598,11 @@ namespace RGYB
                     yield return fadeWait;
                 }
                 cg.alpha = 1;
+                cg.interactable = true;
             }
             else
             {
+                cg.interactable = false;
                 cg.alpha = 1;
                 while (cg.alpha > 0)
                 {
@@ -545,22 +616,34 @@ namespace RGYB
 
         public void CustomGameStartButton()
         {
-            if (PhotonManager.instance.IsSceneReserved())
+            if (PhotonManager.instance.IsSceneReserved() && Custom_Player2NicknameText.text != null)
+            {
+                PhotonManager.instance.SendAllow();
                 PhotonManager.instance.LoadLevel();
+            }
         }
 
-        #endregion
+        public void SetNickName(string opponentNickName)
+        {
+            Custom_Player2NicknameText.text = opponentNickName;
+        }
 
+        public void CustomDirectJoinButton()
+        {
+            Custom_SearchGameCanvasGroup.interactable = false;
+            Custom_SearchGameCanvasGroup.alpha = 0;
+            Custom_SearchGameCanvasGroup.gameObject.SetActive(false);
+            StartCoroutine(customFadePanel(Custom_DirectJoinCanvasGroup, true));
+        }
 
-
-        public void JoinCustomRoom()
+        public void CustomJoinRoomButton()
         {
             Debug.Log("JoinCustomRoom()");
 
             if (JoinCustomRoomName.text == "")
             {
-                Debug.LogWarning("Enter the room name");
-                FailToJoinCustomRoom();
+                Custom_EnterRoomNameAlretPanel2Text.text = "방 제목을 입력하세요.";
+                CustomCloseAlert(true);
             }
             else
             {
@@ -568,12 +651,106 @@ namespace RGYB
             }
         }
 
-        public void FailToJoinCustomRoom()
+        public void CustomFailToJoin()
         {
-            Debug.Log("FailToJoinCustomRoom()");
-            // TODO : Fail UI
+            Custom_EnterRoomNameAlretPanel2Text.text = "방 입장에 실패했습니다.";
+            CustomCloseAlert(true);
         }
 
+        public void CustomCloseAlert(bool active)
+        {
+            StartCoroutine(customFadePanel(Custom_EnterRoomNameAlretPanel2, active));
+        }
+
+        #endregion
+
+        #region Stat
+        // TODO : Implement
+        #endregion
+
+        #region Profile
+        public void ProfileShowInsideCanvasGroup(int index)
+        {
+            if (Profile_InsideCanvasGroup[index].gameObject.activeSelf)
+            {
+                for (int i = 0; i < Profile_OutsideCanvasGroup.Length; i++)
+                {
+                    Profile_OutsideCanvasGroup[i].interactable = true;
+                }
+                Profile_InsideCanvasGroup[index].gameObject.SetActive(false);
+            }
+            else
+            {
+                for (int i = 0; i < Profile_OutsideCanvasGroup.Length; i++)
+                {
+                    Profile_OutsideCanvasGroup[i].interactable = false;
+                }
+
+                Profile_OutsideCanvasGroup[index].interactable = true;
+                Profile_InsideCanvasGroup[index].gameObject.SetActive(true);
+
+                if (index == 0)
+                {
+                    List<Sprite> sprites = DataManager.Instance.GetMyPortraits();
+                    for (int i = 0; i < sprites.Count; i++)
+                    {
+                        Profile_PortraitSelectImage[i].enabled = true;
+                        Profile_PortraitSelectImage[i].sprite = sprites[i];
+                    }
+                    for (int i = 3; i > 0; i--)
+                    {
+                        if (i >= sprites.Count) Profile_PortraitSelectImage[i].enabled = false;
+                    }
+                }
+                else if (index == 2)
+                {
+                    List<String> list = DataManager.Instance.GetMyTitles();
+                    for (int i = 0; i < Profile_TitleText.Length; i++)
+                    {
+                        if (i < list.Count)
+                        {
+                            Profile_TitleText[i].gameObject.SetActive(true);
+                            Profile_TitleText[i].text = list[i];
+                        }
+                        else Profile_TitleText[i].gameObject.SetActive(false);
+                    }
+                }
+            }
+        }
+
+        public void ProfileResetCanvasGroup()
+        {
+            for (int i = 0; i < Profile_OutsideCanvasGroup.Length; i++)
+            {
+                Profile_OutsideCanvasGroup[i].interactable = true;
+                Profile_InsideCanvasGroup[i].gameObject.SetActive(false);
+            }
+        }
+
+        public void ProfileSetPortrait(int index)
+        {
+            Profile_PortraitImage.sprite = Profile_PortraitSelectImage[index].sprite;
+            DataManager.Instance.SetPortrait(Profile_PortraitImage.sprite.name);
+        }
+
+        public void ProfileSetNickName()
+        {
+            DataManager.Instance.SetNickName(Profile_NickName.text);
+            Profile_NickNameText.text = Profile_NickName.text;
+            ProfileResetCanvasGroup();
+        }
+
+        public void ProfileSetTitle(int index)
+        {
+            DataManager.Instance.SetTitle(Profile_TitleText[index].text);
+            Profile_ShownTitleText.text = Profile_TitleText[index].text;
+        }
+
+        #endregion
+
+        #region Shop
+
+        #endregion
         public void ExitGame()
         {
             Debug.Log("ExitGame()");

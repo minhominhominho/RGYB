@@ -19,6 +19,9 @@ namespace RGYB
 
         private Data savedData;
         private Shop[] savedShop;
+        private List<string> portraits = new List<string>();
+        private List<string> titles = new List<string>();
+        private List<string> cardSkins = new List<string>();
 
         void OnEnable()
         {
@@ -92,6 +95,16 @@ namespace RGYB
                 savedShop = JsonUtility.FromJson<ShopReader>(textAsset.ToString()).Shops;
                 SaveShop();
             }
+
+            for (int i = 0; i < savedShop.Length; i++)
+            {
+                if (savedShop[i].IsBought == 1)
+                {
+                    if (savedShop[i].Type == "CardSkin") cardSkins.Add(savedShop[i].Name);
+                    else if (savedShop[i].Type == "Portrait") portraits.Add(savedShop[i].Name);
+                    else if (savedShop[i].Type == "Title") titles.Add(savedShop[i].Name);
+                }
+            }
         }
 
         public bool BuyItem(string name)
@@ -109,6 +122,9 @@ namespace RGYB
                     if (savedData.Credit >= savedShop[i].Price)
                     {
                         savedShop[i].IsBought = 1;
+                        if (savedShop[i].Type == "CardSkin") cardSkins.Add(savedShop[i].Name);
+                        else if (savedShop[i].Type == "Portrait") portraits.Add(savedShop[i].Name);
+                        else if (savedShop[i].Type == "Title") titles.Add(savedShop[i].Name);
                         SaveShop();
                         return true;
                     }
@@ -123,6 +139,33 @@ namespace RGYB
             Debug.Log("No item named : " + name);
 
             return false;
+        }
+
+        public List<Sprite> GetMyCardSkins()
+        {
+            List<Sprite> list = new List<Sprite>();
+
+            for (int i = 0; i < cardSkins.Count; i++)
+            {
+                list.Add(Resources.Load<Sprite>($"CardSkin/{cardSkins[i]}"));
+            }
+
+            return list;
+        }
+        public List<Sprite> GetMyPortraits()
+        {
+            List<Sprite> list = new List<Sprite>();
+
+            for (int i = 0; i < portraits.Count; i++)
+            {
+                list.Add(Resources.Load<Sprite>($"Portrait/{portraits[i]}"));
+            }
+
+            return list;
+        }
+        public List<String> GetMyTitles()
+        {
+            return titles;
         }
 
         private void SaveData()
@@ -149,7 +192,6 @@ namespace RGYB
             return Resources.Load<Sprite>($"CardSkin/{savedData.CardSkin}");
         }
 
-
         public void SetPortrait(string portrait)
         {
             savedData.Portrait = portrait;
@@ -158,7 +200,7 @@ namespace RGYB
 
         public Sprite GetPortrait()
         {
-            return  Resources.Load<Sprite>($"Portrait/{savedData.Portrait}");
+            return Resources.Load<Sprite>($"Portrait/{savedData.Portrait}");
         }
 
         public void SetNickName(string nickName)
@@ -263,6 +305,7 @@ namespace RGYB
         public string Name;
         public int Price;
         public int IsBought;
+        public int IsOnShop;
     }
 
     class ShopReader

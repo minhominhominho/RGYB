@@ -9,6 +9,7 @@ using System.Threading;
 using Unity.VisualScripting.Antlr3.Runtime;
 using ExitGames.Client.Photon;
 using System.Diagnostics.Tracing;
+using Photon.Pun.Demo.Cockpit;
 
 namespace RGYB
 {
@@ -36,7 +37,8 @@ namespace RGYB
         [SerializeField] private const string gameVersion = "1";
         [SerializeField] private const float timeOut = 10;
         private bool isExitCalled = false;
-        private string reservedScene;
+        private string opponentNickName = null;
+        private string reservedScene = null;
 
 
         #region Public Methods
@@ -69,6 +71,7 @@ namespace RGYB
             if (PhotonNetwork.CurrentRoom != null)
             {
                 PhotonNetwork.LeaveRoom();
+                opponentNickName = null;
                 reservedScene = null;
             }
         }
@@ -204,12 +207,15 @@ namespace RGYB
                 Debug.LogFormat("Loading Game Scene");
                 int role = (int)PhotonNetwork.CurrentRoom.CustomProperties["Role"];
                 reservedScene = "Game_" + ((1 - role) == 1 ? "FirstSelect" : "SecondSelect");
+
+                if (MenuManager.Instance.GetPrevMenu() == Menu.Matching) LoadLevel();
+                else SendNickName(DataManager.Instance.GetNickName());
             }
         }
 
         public bool IsSceneReserved()
         {
-            return reservedScene!= null;
+            return reservedScene != null;
         }
 
         public void LoadLevel()
@@ -241,7 +247,7 @@ namespace RGYB
         public override void OnJoinRoomFailed(short returnCode, string message)
         {
             Debug.Log("OnJoinRoomFailed()");
-            MenuManager.Instance.FailToJoinCustomRoom();
+            MenuManager.Instance.CustomFailToJoin();
         }
 
         public override void OnPlayerEnteredRoom(Player other)
@@ -254,7 +260,22 @@ namespace RGYB
                 Debug.LogFormat("Loading Game Scene");
                 int role = (int)PhotonNetwork.CurrentRoom.CustomProperties["Role"];
                 reservedScene = "Game_" + (role == 1 ? "FirstSelect" : "SecondSelect");
+
+                if (MenuManager.Instance.GetPrevMenu() == Menu.Matching)
+                {
+                    LoadLevel();
+                }
+                StartCoroutine(GetNickName());
             }
+        }
+
+        private IEnumerator GetNickName()
+        {
+            while (opponentNickName == null)
+            {
+                yield return wait;
+            }
+            MenuManager.Instance.SetNickName(opponentNickName);
         }
 
         public override void OnPlayerLeftRoom(Player other)
@@ -297,6 +318,22 @@ namespace RGYB
             RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
             object[] eventContent = new object[] { num };
             PhotonNetwork.RaiseEvent(100, eventContent, raiseEventOptions, SendOptions.SendReliable);
+        }
+
+        public void SendNickName(string nickName)
+        {
+            Debug.LogFormat("Send nickName " + nickName);
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+            object[] eventContent = new object[] { nickName };
+            PhotonNetwork.RaiseEvent(101, eventContent, raiseEventOptions, SendOptions.SendReliable);
+        }
+
+        public void SendAllow()
+        {
+            Debug.LogFormat("Send Allow");
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+            object[] eventContent = new object[] { };
+            PhotonNetwork.RaiseEvent(102, eventContent, raiseEventOptions, SendOptions.SendReliable);
         }
 
         public void OnEvent(EventData photonEvent)
@@ -345,14 +382,17 @@ namespace RGYB
                 object[] data = (object[])photonEvent.CustomData;
                 GameManager.Instance.GetEmotion((int)data[0]);
             }
-            // Not used
-            //// CardEffect 101
-            //else if (photonEvent.Code == 101)
-            //{
-            //    object[] data = (object[])photonEvent.CustomData;
-            //    // Debug.LogFormat("Received Card_{0}, Effect_{1}", (int)data[0], (int)data[1]);
-            //    GameManager.Instance.SyncronizeCardEffect((int)data[0], (int)data[1]);
-            //}
+            else if (photonEvent.Code == 101)
+            {
+                Debug.Log("Get Nickname");
+                object[] data = (object[])photonEvent.CustomData;
+                MenuManager.Instance.SetNickName((string)data[0]);
+            }
+            else if (photonEvent.Code == 102)
+            {
+                Debug.Log("Game Start Allowed");
+                LoadLevel();
+            }
         }
 
         #endregion
