@@ -2,8 +2,7 @@
 
 #### 📱 프로젝트 소개
 모바일 플랫폼 온라인 1:1 카드 게임
-
-
+<br>
 #### 📊 개발 동기 및 목적
 심리적 요소가 가미된 경쟁게임은 언제나 수요가
 있었습니다. ‘마피아’, ’먹이사슬’, ’어몽어스’ 등의 심리
@@ -23,12 +22,10 @@
 
 #### 🖥️ 주요 기술
 Unity를 이용하여 Client를 구현하였고, 로비, 게임 동기화 등의 Server는 포톤 엔진을 이용하여 구현했습니다. 게임에 사용된 에셋들은 Illustrator로 직접 제작하거나 Unity Asset Store에서 구매하여 사용했습니다. 게임 UI는 Figma를 이용해 기획하였고, Github, Notion, Discord를 이용하여 협업을 진행했습니다.
-
-
+<br>
 #### 🃏 게임 규칙
 ![image](https://user-images.githubusercontent.com/71825731/206973230-36a6e571-0199-437b-9092-69a0251f2dfb.png)
-
 <br>
-
 #### 🎞️ 게임 플레이 영상
 [![Play Video](https://img.youtube.com/vi/zytNx__qd9o/0.jpg)](https://www.youtube.com/watch?v=zytNx__qd9o)
+
