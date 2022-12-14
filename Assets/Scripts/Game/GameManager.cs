@@ -69,6 +69,8 @@ namespace RGYB
         [HideInInspector] public int SecondSelectedCard = -1;
         [HideInInspector] public int CannotBeBannedCard = -1;
 
+        private bool isRunExit = false;
+
 
 #if UNITY_EDITOR
         public void LoadSequence()
@@ -136,8 +138,12 @@ namespace RGYB
             {
                 frontCardEffects.Add(FrontCards[i].GetComponent<CardEffect>());
                 FrontCards[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
+                BackCards[i].GetComponent<SpriteRenderer>().sprite = DataManager.Instance.GetCardSkin();
                 BackCards[i].GetComponent<SpriteRenderer>().color = new Vector4(255, 255, 255, 0);
             }
+
+            // Set card skin
+            CardSprites[4] = DataManager.Instance.GetCardSkin();
         }
 
         private void Start()
@@ -216,6 +222,7 @@ namespace RGYB
         public void CloseCurrentCanvasGroup(bool isFade = false)
         {
             if (CurrentCanvasGroup == null || isClosingCurrentCanvasGroup) return;
+            isRunExit = false;
 
             isClosingCurrentCanvasGroup = true;
             if (isFade)
@@ -288,6 +295,7 @@ namespace RGYB
                 }
                 else if (buttonName == "Exit")
                 {
+                    isRunExit = true;
                     OpenCanvasGroup(ExitPopUpFromButtonUI, false, true);
                 }
             }
@@ -346,6 +354,7 @@ namespace RGYB
 
         public void ExitButton()
         {
+            if (isRunExit) DataManager.Instance.SetScore(DataManager.Instance.GetScore() - 100);
             PhotonManager.Instance.ExitGame();
         }
         #endregion

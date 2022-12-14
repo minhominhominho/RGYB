@@ -28,7 +28,7 @@ namespace RGYB
 
         private void OnMouseUp()
         {
-            rect.position = new Vector3(rect.position.x, rect.position.y - pressedYPosAdding, rect.position.z);
+            rect.localPosition = Vector3.zero;
             menuText.SetActive(false);
         }
 

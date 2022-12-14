@@ -31,10 +31,30 @@ namespace RGYB
         Emotion//
     }
 
+    public enum MenuType
+    {
+        EnterWaitRoom,
+        Logo, //
+        MatchFound,
+        MatchStart,//
+        MatchUnable,//
+        MenuSelect,//
+        Purchase,
+        SelectButton,//
+        SelectToggle//
+    }
+
     [System.Serializable]
     public struct SFXClip
     {
         public SFXType Type;
+        public AudioClip Clip;
+    }
+
+    [System.Serializable]
+    public struct MenuClip
+    {
+        public MenuType Type;
         public AudioClip Clip;
     }
 
@@ -52,7 +72,9 @@ namespace RGYB
 
         [SerializeField] private AudioClip bgmAudioClip;
         [SerializeField] private List<SFXClip> sfxAudioList;
+        [SerializeField] private List<MenuClip> menuAudioList;
         private Dictionary<SFXType, AudioClip> sfxAudioDictionary = new Dictionary<SFXType, AudioClip>();
+        private Dictionary<MenuType, AudioClip> menuAudioDictionary = new Dictionary<MenuType, AudioClip>();
 
 
         void Awake()
@@ -65,6 +87,11 @@ namespace RGYB
             foreach (SFXClip sfx in sfxAudioList)
             {
                 sfxAudioDictionary[sfx.Type] = sfx.Clip;
+            }
+
+            foreach (MenuClip menu in menuAudioList)
+            {
+                menuAudioDictionary[menu.Type] = menu.Clip;
             }
 
             PlayBGM();
@@ -87,6 +114,13 @@ namespace RGYB
             SFXSpeaker.PlayOneShot(sfxAudioDictionary[type]);
         }
 
+        public void PlayMenu(MenuType type, bool isLoop = false)
+        {
+            if (MenuManager.Instance.IsResetPhase) return;
+            SFXSpeaker.loop = isLoop;
+            SFXSpeaker.PlayOneShot(menuAudioDictionary[type]);
+        }
+
         public void StopAllAudio()
         {
             BGMSpeaker.Stop();
@@ -94,6 +128,11 @@ namespace RGYB
         }
 
         public void StopSFX()
+        {
+            SFXSpeaker.Stop();
+        }
+
+        public void StopMenu()
         {
             SFXSpeaker.Stop();
         }

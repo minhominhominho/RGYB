@@ -8,6 +8,8 @@ using Unity.VisualScripting;
 using UnityEngine.Analytics;
 using UnityEngine.SocialPlatforms.Impl;
 using System.Reflection;
+using Unity.VisualScripting.Antlr3.Runtime;
+using Photon.Realtime;
 
 namespace RGYB
 {
@@ -18,7 +20,8 @@ namespace RGYB
     {
         public static MenuManager Instance = null;
         private WaitForSeconds fadeWait = new WaitForSeconds(0.025f);
-        // private WaitForSeconds normalWait = new WaitForSeconds(0.01f);
+        private WaitForSeconds wait = new WaitForSeconds(0.001f);
+        [HideInInspector] public bool IsResetPhase = false;
 
         [Header("Main")]
         [SerializeField] private CanvasGroup Logo;
@@ -80,6 +83,9 @@ namespace RGYB
         [SerializeField] private CanvasGroup Custom_CreateGameCanvasGroup;
         [SerializeField] private CanvasGroup Custom_EnterRoomNameAlretPanel;
 
+        [SerializeField] private Button Custom_CustomGameStartButton;
+        [SerializeField] private GameObject Custom_CustomLoading;
+
         [SerializeField] private Sprite Custom_Sprite;
         [SerializeField] private CanvasGroup Custom_WaitRoomCanvasGroup;
         [SerializeField] private TextMeshProUGUI Custom_RoomNameText;
@@ -98,6 +104,16 @@ namespace RGYB
         [SerializeField] private TMP_InputField JoinCustomRoomName;
         [SerializeField] private TMP_InputField JoinCustomRoomPassword;
 
+        [SerializeField] private CanvasGroup Custom_OpponentExitAlretPanel;
+
+        [SerializeField] private GameObject Custom_RoomPrefab;
+        [SerializeField] private GameObject Custom_RoomListPanel;
+
+        private bool Custom_IsUpdatingRoomList = false;
+        private string Custom_SelectedRoomName;
+        private int Custom_SelectedGameMode;
+        private int Custom_SelectedRRandomRole;
+
         [Header("Stat")]
 
         [Header("Profile")]
@@ -106,22 +122,37 @@ namespace RGYB
 
         [SerializeField] private Image Profile_PortraitImage;
         [SerializeField] private Image[] Profile_PortraitSelectImage;
-        [SerializeField] private GameObject[] Profile_PortraitButtons;
 
         [SerializeField] private TextMeshProUGUI Profile_NickNameText;
-        [SerializeField] private TMP_InputField Profile_NickName;
+        [SerializeField] private TMP_InputField Profile_NickNameInputField;
 
         [SerializeField] private TextMeshProUGUI Profile_ShownTitleText;
         [SerializeField] private TextMeshProUGUI[] Profile_TitleText;
 
         [SerializeField] private TextMeshProUGUI Profile_ScoreText;
+        [SerializeField] private TextMeshProUGUI Profile_CreditText;
+
+        [SerializeField] private Image Profile_CardSkinImage;
+        [SerializeField] private Image[] Profile_CardSkinSelectImage;
 
 
         [Header("Shop")]
         [SerializeField] private TextMeshProUGUI Shop_CreditText;
-        //[Header("Option")]
-        //[Header("Exit")]
+        [SerializeField] private GameObject Shop_CardSkinsFrame;
+        [SerializeField] private GameObject Shop_PortraitsFrame;
+        [SerializeField] private GameObject Shop_PortraitsPrefab;
+        [SerializeField] private GameObject Shop_TitlesFrame;
+        [SerializeField] private GameObject Shop_TitlesPrefab;
 
+        [SerializeField] private CanvasGroup Shop_CheckPurchaseCanvasGroup;
+        [SerializeField] private CanvasGroup Shop_NotEnoughMoneyCanvasGroup;
+        private string shop_tempType;
+        private string shop_tempName;
+
+
+        //[Header("Option")]
+        [Header("Exit")]
+        [SerializeField] private GameObject Exit_CheckPanel;
 
 
         public Menu GetPrevMenu()
@@ -148,6 +179,7 @@ namespace RGYB
 
         private IEnumerator WaitAndSetData()
         {
+            SoundManager.Instance.PlayMenu(MenuType.Logo);
             Logo.alpha = 1;
             while (Logo.alpha > 0)
             {
@@ -162,6 +194,7 @@ namespace RGYB
 
         public void SetData()
         {
+            IsResetPhase = true;
             Debug.Log("SetData");
             // Data : Portrait, NickName, Title, Credit, Score, Gender, MBTI, Tendency
             // Shop : Card, Portrait, Title
@@ -179,13 +212,21 @@ namespace RGYB
             // Matching
             Matching_ScoreText.text = "점수 : " + DataManager.Instance.GetScore().ToString();
 
-            // Shop
-            Shop_CreditText.text = DataManager.Instance.GetCredit().ToString();
+            // Custom
+            Custom_CustomGameStartButton.interactable = false;
 
+            // Profile
+            ProfileSetData();
+
+            // Shop
+            ShopUpdate();
+            IsResetPhase = false;
         }
 
         public void SetFront(Menu menu)
         {
+            SoundManager.Instance.PlayMenu(MenuType.MenuSelect);
+            IsResetPhase = true;
             #region Initialize Hone Panel
             if (menu == Menu.Home)
                 SetData();
@@ -202,6 +243,11 @@ namespace RGYB
             #region Initialize Custom Panel
             if (prevMenu == Menu.Custom)
             {
+                Custom_CustomLoading.SetActive(true);
+                Custom_CustomGameStartButton.interactable = false;
+                Custom_OpponentExitAlretPanel.gameObject.SetActive(false);
+                Custom_Player2NicknameText.text = null;
+
                 Custom_CreateGameUI.interactable = true;
                 Custom_SearchGameUI.interactable = true;
                 Custom_SearchGameUI.alpha = 1;
@@ -257,11 +303,7 @@ namespace RGYB
             #region Initialize Profile Panel
             if (menu == Menu.Profile)
             {
-                Profile_PortraitImage.sprite = DataManager.Instance.GetPortrait();
-                Profile_NickName.text = DataManager.Instance.GetNickName();
-                Profile_NickNameText.text = DataManager.Instance.GetNickName();
-                Profile_ShownTitleText.text = DataManager.Instance.GetTitle();
-                Profile_ScoreText.text = "점수 : " + DataManager.Instance.GetScore().ToString();
+                ProfileSetData();
             }
             if (prevMenu == Menu.Profile)
             {
@@ -270,7 +312,13 @@ namespace RGYB
 
             #endregion
 
-            
+            #region Initialize Shop Panel
+            ShopClosePanel();
+            #endregion
+
+            #region Initialize Exit Panel
+            ExitButton(false);
+            #endregion
 
             // Move Cards (roll)
             for (int i = 0; i < CanvasObject.Length; i++)
@@ -284,8 +332,10 @@ namespace RGYB
                     ContentPanels[((int)menu + i) % ContentObject.Length].RevealBlockingImage(true);
                 }
                 ContentObject[((int)menu + i) % ContentObject.Length].transform.SetParent(CanvasObject[i].transform, false);
+                ContentObject[((int)menu + i) % ContentObject.Length].GetComponent<RectTransform>().localPosition = Vector3.zero;
             }
             prevMenu = menu;
+            IsResetPhase = false;
         }
 
         public void FadeInBlack()
@@ -313,6 +363,7 @@ namespace RGYB
 
             if (Matching_isSearching)
             {
+                SoundManager.Instance.PlayMenu(MenuType.MatchStart);
                 Matching_isSearching = false;
                 Matching_isLocked = true;
                 StartCoroutine(freeIsSearching());
@@ -324,6 +375,7 @@ namespace RGYB
             }
             else if (!Matching_isSearching && !Matching_isLocked)
             {
+                SoundManager.Instance.PlayMenu(MenuType.MatchStart);
                 SetInteractableToggles(false);
                 Matching_isSearching = true;
                 Debug.Log("StartRandomMatch");
@@ -377,6 +429,7 @@ namespace RGYB
 
         public void RandomMathcModeToggle()
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectToggle);
             if (Matching_isClassic)
             {
                 Matching_ClassicToggle.isOn = false;
@@ -397,6 +450,8 @@ namespace RGYB
 
         public void CustomGamePanelButton(bool isCreate)
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+            if (!isCreate) CustomGetRoomList();
             StartCoroutine(customGamePanelButton(isCreate));
         }
 
@@ -476,6 +531,7 @@ namespace RGYB
 
         public void CustomSetClosedToggle()
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectToggle);
             if (Custom_SetClosedToggle.isOn == false)
             {
                 Custom_CreateCustomRoomPassword.gameObject.GetComponent<CanvasGroup>().interactable = false;
@@ -488,6 +544,7 @@ namespace RGYB
 
         public void CustomMathcModeToggle()
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectToggle);
             if (Custom_CreateIsClassic)
             {
                 Custom_CreateClassicToggle.isOn = false;
@@ -504,6 +561,7 @@ namespace RGYB
 
         public void CustomSetCreateRoleToggle(int val)
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectToggle);
             if (Custom_CreateRole == val)
             {
                 Custom_CreateRole = 2;
@@ -529,12 +587,20 @@ namespace RGYB
             }
             else
             {
-                PhotonManager.Instance.CreateRoom(Custom_SetClosedToggle.isOn, Custom_CreateCustomRoomName.text, Custom_CreateCustomRoomPassword.text, Custom_CreateRole == 2 ? true : false, Custom_CreateRole == 0 ? true : false);
-                StartCoroutine(customEnterWaitRoom());
+                SoundManager.Instance.PlayMenu(MenuType.EnterWaitRoom);
+                PhotonManager.Instance.CreateRoom(
+                    Custom_SetClosedToggle.isOn,
+                    Custom_CreateCustomRoomName.text,
+                    Custom_CreateCustomRoomPassword.text,
+                    Custom_CreateRole == 2 ? true : false,
+                    Custom_CreateRole == 0 ? true : false,
+                    Custom_CreateIsClassic ? 1 : 0
+                    );
+                StartCoroutine(customCreaterEnterWaitRoom());
             }
         }
 
-        private IEnumerator customEnterWaitRoom()
+        private IEnumerator customCreaterEnterWaitRoom()
         {
             // Map Data
             Custom_RoomNameText.text = Custom_CreateCustomRoomName.text;
@@ -581,6 +647,7 @@ namespace RGYB
 
         public void CustomEnterRoomNameAlretPanel(bool active)
         {
+            SoundManager.Instance.PlayMenu(MenuType.MatchUnable);
             StartCoroutine(customFadePanel(Custom_EnterRoomNameAlretPanel, active));
         }
 
@@ -618,18 +685,38 @@ namespace RGYB
         {
             if (PhotonManager.instance.IsSceneReserved() && Custom_Player2NicknameText.text != null)
             {
-                PhotonManager.instance.SendAllow();
+                SoundManager.Instance.PlayMenu(MenuType.MatchStart);
+                PhotonManager.instance.AlertStartGame();
                 PhotonManager.instance.LoadLevel();
             }
         }
 
-        public void SetNickName(string opponentNickName)
+        public void CustomAlertOpponentExit(bool isOpen)
         {
+            if (isOpen) SoundManager.Instance.PlayMenu(MenuType.MatchUnable);
+            else SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+
+            Custom_OpponentExitAlretPanel.gameObject.SetActive(isOpen);
+        }
+
+        public void CustomOnPlayerEntered(string opponentNickName)
+        {
+            SoundManager.Instance.PlayMenu(MenuType.MatchStart);
             Custom_Player2NicknameText.text = opponentNickName;
+            Custom_CustomGameStartButton.interactable = true;
+            Custom_CustomLoading.SetActive(false);
+
+            int gameMode = Custom_CreateIsClassic ? 1 : 0;
+            int p1Role = Custom_CreateRole;
+            string p1Name = DataManager.Instance.GetNickName();
+            string roomName = Custom_CreateCustomRoomName.text;
+
+            PhotonManager.Instance.SendRoomData(roomName, p1Name, gameMode, p1Role);
         }
 
         public void CustomDirectJoinButton()
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
             Custom_SearchGameCanvasGroup.interactable = false;
             Custom_SearchGameCanvasGroup.alpha = 0;
             Custom_SearchGameCanvasGroup.gameObject.SetActive(false);
@@ -638,6 +725,7 @@ namespace RGYB
 
         public void CustomJoinRoomButton()
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
             Debug.Log("JoinCustomRoom()");
 
             if (JoinCustomRoomName.text == "")
@@ -653,13 +741,151 @@ namespace RGYB
 
         public void CustomFailToJoin()
         {
+            SoundManager.Instance.PlayMenu(MenuType.MatchUnable);
             Custom_EnterRoomNameAlretPanel2Text.text = "방 입장에 실패했습니다.";
+            if (!Custom_IsUpdatingRoomList)
+            {
+                PhotonManager.Instance.PullRoomList();
+                StartCoroutine(CustomMapRoomList());
+            }
             CustomCloseAlert(true);
         }
 
         public void CustomCloseAlert(bool active)
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
             StartCoroutine(customFadePanel(Custom_EnterRoomNameAlretPanel2, active));
+        }
+
+        public void CustomOnJoinedCustomRoom()
+        {
+            StartCoroutine(customJoinerEnterWaitRoom());
+        }
+
+        private IEnumerator customJoinerEnterWaitRoom()
+        {
+            while (!PhotonManager.Instance.IsGotRoomData && prevMenu == Menu.Custom)
+            {
+                yield return wait;
+            }
+            Debug.Log("Reach");
+            if (prevMenu == Menu.Custom)
+            {
+                SoundManager.Instance.PlayMenu(MenuType.EnterWaitRoom);
+
+                // Hide & Fade
+                Custom_IconTargetObject.GetComponent<Image>().sprite = Custom_Sprite;
+                Custom_SearchGameCanvasGroup.interactable = false;
+                Custom_SearchGameCanvasGroup.alpha = 0;
+                Custom_SearchGameCanvasGroup.gameObject.SetActive(false);
+
+                Custom_CustomLoading.SetActive(false);
+                Custom_WaitRoomCanvasGroup.gameObject.SetActive(true);
+                Custom_WaitRoomCanvasGroup.alpha = 0;
+                Custom_WaitRoomCanvasGroup.interactable = false;
+
+                while (Custom_WaitRoomCanvasGroup.alpha < 1)
+                {
+                    Custom_WaitRoomCanvasGroup.alpha += 0.05f;
+                    yield return fadeWait;
+                }
+                Custom_WaitRoomCanvasGroup.alpha = 1;
+                Custom_WaitRoomCanvasGroup.interactable = true;
+            }
+        }
+
+        public void CustomSetWaitRoomData(string roomName, string p1Name, int gameMode, int p1Role)
+        {
+            // Map Data
+            Custom_RoomNameText.text = roomName;
+            Custom_Player1NicknameText.text = p1Name;
+            Custom_Player2NicknameText.text = DataManager.Instance.GetNickName();
+            Custom_GameModeText.text = gameMode == 1 ? "클래식" : "하드코어";
+
+            if (p1Role == 2)
+            {
+                Custom_Player1RoleText.text = "랜덤 역할";
+                Custom_Player2RoleText.text = "랜덤 역할";
+                Custom_RoleModeText.text = "랜덤 역할";
+            }
+            else if (p1Role == 1)
+            {
+                Custom_Player1RoleText.text = "응시자";
+                Custom_Player2RoleText.text = "출제자";
+                Custom_RoleModeText.text = "지정 역할";
+            }
+            else if (p1Role == 0)
+            {
+                Custom_Player1RoleText.text = "출제자";
+                Custom_Player2RoleText.text = "응시자";
+                Custom_RoleModeText.text = "지정 역할";
+            }
+        }
+
+        public void CustomGetRoomList()
+        {
+            if (!Custom_IsUpdatingRoomList)
+            {
+                SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+                PhotonManager.Instance.PullRoomList();
+                StartCoroutine(CustomMapRoomList());
+            }
+            else
+            {
+                SoundManager.Instance.PlayMenu(MenuType.MatchUnable);
+            }
+
+        }
+
+        private IEnumerator CustomMapRoomList()
+        {
+            Custom_IsUpdatingRoomList = true;
+            float timeOut = 2f;
+            float passedTime = 0;
+
+            for(int i=0;i< Custom_RoomListPanel.transform.childCount; i++)
+            {
+                Custom_RoomListPanel.transform.GetChild(i).gameObject.SetActive(false);
+            }
+
+            while (PhotonManager.Instance.CurrentRoomList == null && passedTime < timeOut)
+            {
+                passedTime += 0.025f;
+                yield return fadeWait;
+            }
+
+            if (passedTime < timeOut)
+            {
+                for (int i = 0; i < PhotonManager.Instance.CurrentRoomList.Count; i++)
+                {
+                    Custom_RoomPrefab.transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = PhotonManager.Instance.CurrentRoomList[i].Name;
+                    Custom_RoomPrefab.transform.GetChild(2).GetComponent<TextMeshProUGUI>().text = (int)PhotonManager.Instance.CurrentRoomList[i].CustomProperties["GameMode"] == 1 ? "클래식" : "하드코어";
+                    Custom_RoomPrefab.transform.GetChild(3).GetComponent<TextMeshProUGUI>().text = (int)PhotonManager.Instance.CurrentRoomList[i].CustomProperties["RandomRole"] == 1 ? "랜덤 역할" : "지정 역할";
+                    Instantiate(Custom_RoomPrefab, Custom_RoomListPanel.transform);
+                }
+            }
+            else
+            {
+                Debug.LogError("TimeOut!");
+            }
+
+            Custom_IsUpdatingRoomList = false;
+        }
+
+        public void CustomSelectRoom(string RoomName)
+        {
+            Custom_SelectedRoomName = RoomName;
+        }
+
+        public void CustomEnterSelectRoom()
+        {
+            if (Custom_SelectedRoomName == null || Custom_SelectedRoomName == "")
+            {
+                CustomFailToJoin();
+                return;
+            }
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+            PhotonManager.Instance.JoinCustomRoom(Custom_SelectedRoomName, "");
         }
 
         #endregion
@@ -669,8 +895,20 @@ namespace RGYB
         #endregion
 
         #region Profile
+        public void ProfileSetData()
+        {
+            Profile_PortraitImage.sprite = DataManager.Instance.GetPortrait();
+            Profile_NickNameInputField.text = DataManager.Instance.GetNickName();
+            Profile_NickNameText.text = DataManager.Instance.GetNickName();
+            Profile_ShownTitleText.text = DataManager.Instance.GetTitle();
+            Profile_ScoreText.text = "점수 : " + DataManager.Instance.GetScore().ToString();
+            Profile_CreditText.text = DataManager.Instance.GetCredit().ToString();
+            Profile_CardSkinImage.sprite = DataManager.Instance.GetCardSkin();
+        }
+
         public void ProfileShowInsideCanvasGroup(int index)
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
             if (Profile_InsideCanvasGroup[index].gameObject.activeSelf)
             {
                 for (int i = 0; i < Profile_OutsideCanvasGroup.Length; i++)
@@ -691,28 +929,63 @@ namespace RGYB
 
                 if (index == 0)
                 {
-                    List<Sprite> sprites = DataManager.Instance.GetMyPortraits();
-                    for (int i = 0; i < sprites.Count; i++)
+                    List<Shop> list = DataManager.Instance.GetShopList("Portrait", 1);
+                    for (int i = 0; i < 4; i++)
                     {
-                        Profile_PortraitSelectImage[i].enabled = true;
-                        Profile_PortraitSelectImage[i].sprite = sprites[i];
+                        Profile_PortraitSelectImage[i].gameObject.SetActive(false);
                     }
-                    for (int i = 3; i > 0; i--)
+
+                    int firstIndex = -1;
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        if (i >= sprites.Count) Profile_PortraitSelectImage[i].enabled = false;
+                        if (list[i].Name == Profile_PortraitImage.sprite.name)
+                        {
+                            firstIndex = i;
+                        }
+                    }
+
+                    int len = list.Count < 4 ? list.Count : 4;
+                    for (int i = 0; i < len; i++)
+                    {
+                        Profile_PortraitSelectImage[i].gameObject.SetActive(true);
+                        Profile_PortraitSelectImage[i].sprite = list[(i + firstIndex) % list.Count].sprite;
                     }
                 }
                 else if (index == 2)
                 {
-                    List<String> list = DataManager.Instance.GetMyTitles();
+                    List<Shop> list = DataManager.Instance.GetShopList("Title", 1);
                     for (int i = 0; i < Profile_TitleText.Length; i++)
                     {
                         if (i < list.Count)
                         {
                             Profile_TitleText[i].gameObject.SetActive(true);
-                            Profile_TitleText[i].text = list[i];
+                            Profile_TitleText[i].text = list[i].Name;
                         }
                         else Profile_TitleText[i].gameObject.SetActive(false);
+                    }
+                }
+                else if (index == 7)
+                {
+                    List<Shop> list = DataManager.Instance.GetShopList("CardSkin", 1);
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Profile_CardSkinSelectImage[i].gameObject.SetActive(false);
+                    }
+
+                    int firstIndex = -1;
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        if (list[i].Name == Profile_CardSkinImage.sprite.name)
+                        {
+                            firstIndex = i;
+                        }
+                    }
+
+                    int len = list.Count < 4 ? list.Count : 4;
+                    for (int i = 0; i < len; i++)
+                    {
+                        Profile_CardSkinSelectImage[i].gameObject.SetActive(true);
+                        Profile_CardSkinSelectImage[i].sprite = list[(i + firstIndex) % list.Count].sprite;
                     }
                 }
             }
@@ -729,32 +1002,185 @@ namespace RGYB
 
         public void ProfileSetPortrait(int index)
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
             Profile_PortraitImage.sprite = Profile_PortraitSelectImage[index].sprite;
             DataManager.Instance.SetPortrait(Profile_PortraitImage.sprite.name);
+            ProfileResetCanvasGroup();
+        }
+
+        public void ProfileRoll(bool isRight)
+        {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+            List<Shop> list = DataManager.Instance.GetShopList("Portrait", 1);
+            if (list.Count > 4)
+            {
+                int firstIndex = -1;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].Name == Profile_PortraitSelectImage[0].sprite.name)
+                    {
+                        firstIndex = i;
+                    }
+                }
+
+                for (int i = 0; i < 4; i++)
+                {
+                    if (isRight)
+                        Profile_PortraitSelectImage[i].sprite = list[(list.Count + i + firstIndex + 1) % list.Count].sprite;
+                    else
+                        Profile_PortraitSelectImage[i].sprite = list[(list.Count + i + firstIndex - 1) % list.Count].sprite;
+                }
+            }
+        }
+
+        public void ProfileSetCardSkin(int index)
+        {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+            Profile_CardSkinImage.sprite = Profile_CardSkinSelectImage[index].sprite;
+            DataManager.Instance.SetCardSkin(Profile_CardSkinImage.sprite.name);
+            ProfileResetCanvasGroup();
+        }
+
+        public void ProfileCardSkinRoll(bool isRight)
+        {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+            List<Shop> list = DataManager.Instance.GetShopList("CardSkin", 1);
+            if (list.Count > 4)
+            {
+                int firstIndex = -1;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].Name == Profile_CardSkinSelectImage[0].sprite.name)
+                    {
+                        firstIndex = i;
+                    }
+                }
+
+                for (int i = 0; i < 4; i++)
+                {
+                    if (isRight)
+                        Profile_CardSkinSelectImage[i].sprite = list[(list.Count + i + firstIndex + 1) % list.Count].sprite;
+                    else
+                        Profile_CardSkinSelectImage[i].sprite = list[(list.Count + i + firstIndex - 1) % list.Count].sprite;
+                }
+            }
         }
 
         public void ProfileSetNickName()
         {
-            DataManager.Instance.SetNickName(Profile_NickName.text);
-            Profile_NickNameText.text = Profile_NickName.text;
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+            DataManager.Instance.SetNickName(Profile_NickNameInputField.text);
+            Profile_NickNameText.text = Profile_NickNameInputField.text;
             ProfileResetCanvasGroup();
         }
 
         public void ProfileSetTitle(int index)
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
             DataManager.Instance.SetTitle(Profile_TitleText[index].text);
             Profile_ShownTitleText.text = Profile_TitleText[index].text;
+            ProfileResetCanvasGroup();
         }
 
         #endregion
 
         #region Shop
+        private void ShopUpdate()
+        {
+            // Credit
+            Shop_CreditText.text = DataManager.Instance.GetCredit().ToString();
+
+            // CardSkins
+            List<Shop> list = DataManager.Instance.GetShopList("CardSkin", 0);
+            for (int i = 0; i < Shop_CardSkinsFrame.transform.childCount; i++)
+            {
+                Shop_CardSkinsFrame.transform.GetChild(i).gameObject.SetActive(false);
+            }
+            for (int i = 0; i < list.Count; i++)
+            {
+                Shop_CardSkinsFrame.transform.GetChild(i).GetComponent<Image>().sprite = list[i].sprite;
+                Shop_CardSkinsFrame.transform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = list[i].Price.ToString();
+                Shop_CardSkinsFrame.transform.GetChild(i).gameObject.SetActive(true);
+            }
+
+            // Portraits
+            list = DataManager.Instance.GetShopList("Portrait", 0);
+            for (int i = 0; i < Shop_PortraitsFrame.transform.childCount; i++)
+            {
+                Shop_PortraitsFrame.transform.GetChild(i).gameObject.SetActive(false);
+            }
+            for (int i = 0; i < list.Count; i++)
+            {
+                Shop_PortraitsFrame.transform.GetChild(i).GetComponent<Image>().sprite = list[i].sprite;
+                Shop_PortraitsFrame.transform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = list[i].Price.ToString();
+                Shop_PortraitsFrame.transform.GetChild(i).gameObject.SetActive(true);
+            }
+
+            // Titles
+            list = DataManager.Instance.GetShopList("Title", 0);
+            for (int i = 0; i < Shop_TitlesFrame.transform.childCount; i++)
+            {
+                Shop_TitlesFrame.transform.GetChild(i).gameObject.SetActive(false);
+            }
+            for (int i = 0; i < list.Count; i++)
+            {
+                Shop_TitlesFrame.transform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = list[i].Name;
+                Shop_TitlesFrame.transform.GetChild(i).GetChild(1).GetComponent<TextMeshProUGUI>().text = list[i].Price.ToString();
+                Shop_TitlesFrame.transform.GetChild(i).gameObject.SetActive(true);
+            }
+        }
+
+        public void ShopBuyItem()
+        {
+            if (DataManager.Instance.BuyItem(shop_tempType, shop_tempName))
+            {
+                SoundManager.Instance.PlayMenu(MenuType.Purchase);
+                ShopUpdate();
+                ShopClosePanel();
+            }
+            else
+            {
+                SoundManager.Instance.PlayMenu(MenuType.MatchUnable);
+                ShopNotEnoughMoney();
+            }
+        }
+
+        public void ShopCheckBuyItem(string itemType, string itemName)
+        {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+            Shop_CheckPurchaseCanvasGroup.gameObject.SetActive(true);
+            shop_tempType = itemType;
+            shop_tempName = itemName;
+        }
+
+        public void ShopNotEnoughMoney()
+        {
+            Shop_NotEnoughMoneyCanvasGroup.gameObject.SetActive(true);
+        }
+
+        public void ShopClosePanel()
+        {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+            Shop_CheckPurchaseCanvasGroup.gameObject.SetActive(false);
+            Shop_NotEnoughMoneyCanvasGroup.gameObject.SetActive(false);
+        }
 
         #endregion
+
+        #region Exit
+        public void ExitButton(bool isExit)
+        {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
+            Exit_CheckPanel.SetActive(isExit);
+        }
+
         public void ExitGame()
         {
+            SoundManager.Instance.PlayMenu(MenuType.SelectButton);
             Debug.Log("ExitGame()");
             Application.Quit();
         }
+        #endregion
+
     }
 }

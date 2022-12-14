@@ -19,9 +19,14 @@ namespace RGYB
 
         private Data savedData;
         private Shop[] savedShop;
-        private List<string> portraits = new List<string>();
-        private List<string> titles = new List<string>();
-        private List<string> cardSkins = new List<string>();
+
+        void OnApplicationQuit()
+        {
+            if (SceneManager.GetActiveScene().name != "MainMenu")
+            {
+                DataManager.Instance.SetScore(DataManager.Instance.GetScore() - 100);
+            }
+        }
 
         void OnEnable()
         {
@@ -32,8 +37,6 @@ namespace RGYB
         {
             if (scene.name == "MainMenu")
             {
-                ReadData();
-                ReadShop();
                 MenuManager.Instance.OpenMainMenu();
             }
         }
@@ -45,12 +48,18 @@ namespace RGYB
 
         private void Awake()
         {
-            if (Instance == null)
+            if (DataManager.Instance == null)
             {
                 DontDestroyOnLoad(this.gameObject);
                 Instance = this.GetComponent<DataManager>();
                 FILE_PATH_Data = Application.persistentDataPath + "/Data.json";
                 FILE_PATH_Shop = Application.persistentDataPath + "/Shop.json";
+                ReadData();
+                ReadShop();
+            }
+            else
+            {
+                Destroy(this.gameObject);
             }
         }
 
@@ -96,22 +105,29 @@ namespace RGYB
                 SaveShop();
             }
 
+            SetSavedShopSprites();
+        }
+
+        public void SetSavedShopSprites()
+        {
             for (int i = 0; i < savedShop.Length; i++)
             {
-                if (savedShop[i].IsBought == 1)
+                if (savedShop[i].Type == "CardSkin")
                 {
-                    if (savedShop[i].Type == "CardSkin") cardSkins.Add(savedShop[i].Name);
-                    else if (savedShop[i].Type == "Portrait") portraits.Add(savedShop[i].Name);
-                    else if (savedShop[i].Type == "Title") titles.Add(savedShop[i].Name);
+                    savedShop[i].sprite = Resources.Load<Sprite>($"CardSkin/{savedShop[i].Name}");
+                }
+                else if (savedShop[i].Type == "Portrait")
+                {
+                    savedShop[i].sprite = Resources.Load<Sprite>($"Portrait/{savedShop[i].Name}");
                 }
             }
         }
 
-        public bool BuyItem(string name)
+        public bool BuyItem(string itemType, string itemName)
         {
             for (int i = 0; i < savedShop.Length; i++)
             {
-                if (savedShop[i].Name == name)
+                if (savedShop[i].Type == itemType && savedShop[i].Name == itemName)
                 {
                     if (savedShop[i].IsBought == 1)
                     {
@@ -122,10 +138,7 @@ namespace RGYB
                     if (savedData.Credit >= savedShop[i].Price)
                     {
                         savedShop[i].IsBought = 1;
-                        if (savedShop[i].Type == "CardSkin") cardSkins.Add(savedShop[i].Name);
-                        else if (savedShop[i].Type == "Portrait") portraits.Add(savedShop[i].Name);
-                        else if (savedShop[i].Type == "Title") titles.Add(savedShop[i].Name);
-                        SaveShop();
+                        savedData.Credit -= savedShop[i].Price;
                         return true;
                     }
                     else
@@ -136,36 +149,20 @@ namespace RGYB
                 }
             }
 
-            Debug.Log("No item named : " + name);
+            Debug.Log("No item named : " + itemType + " : " + itemName);
 
             return false;
         }
 
-        public List<Sprite> GetMyCardSkins()
+        public List<Shop> GetShopList(string type, int isBought) // isBought 0 : Shop, isBought 1 : Mine
         {
-            List<Sprite> list = new List<Sprite>();
-
-            for (int i = 0; i < cardSkins.Count; i++)
+            List<Shop> list = new List<Shop>();
+            for (int i = 0; i < savedShop.Length; i++)
             {
-                list.Add(Resources.Load<Sprite>($"CardSkin/{cardSkins[i]}"));
+                if (savedShop[i].Type == type && savedShop[i].IsBought == isBought)
+                    list.Add(savedShop[i]);
             }
-
             return list;
-        }
-        public List<Sprite> GetMyPortraits()
-        {
-            List<Sprite> list = new List<Sprite>();
-
-            for (int i = 0; i < portraits.Count; i++)
-            {
-                list.Add(Resources.Load<Sprite>($"Portrait/{portraits[i]}"));
-            }
-
-            return list;
-        }
-        public List<String> GetMyTitles()
-        {
-            return titles;
         }
 
         private void SaveData()
@@ -176,7 +173,10 @@ namespace RGYB
 
         private void SaveShop()
         {
-            string json = JsonConvert.SerializeObject(savedShop);
+            Shop[] savedShopForJson = new Shop[savedShop.Length];
+            Array.Copy(savedShop, savedShopForJson, savedShop.Length);
+            for (int i = 0; i < savedShopForJson.Length; i++) savedShopForJson[i].sprite = null;
+            string json = JsonConvert.SerializeObject(savedShopForJson);
             File.WriteAllText(FILE_PATH_Shop, json);
         }
 
@@ -295,7 +295,6 @@ namespace RGYB
         public string Gender;
         public string MBTI;
         public string Tendency;
-
     }
 
     [System.Serializable]
@@ -306,6 +305,7 @@ namespace RGYB
         public int Price;
         public int IsBought;
         public int IsOnShop;
+        [SerializeField] public Sprite sprite;
     }
 
     class ShopReader

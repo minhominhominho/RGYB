@@ -10,6 +10,8 @@ using Unity.VisualScripting.Antlr3.Runtime;
 using ExitGames.Client.Photon;
 using System.Diagnostics.Tracing;
 using Photon.Pun.Demo.Cockpit;
+using UnityEngine.SceneManagement;
+using System.Data;
 
 namespace RGYB
 {
@@ -39,6 +41,10 @@ namespace RGYB
         private bool isExitCalled = false;
         private string opponentNickName = null;
         private string reservedScene = null;
+
+        public bool IsGotRoomData = false;
+
+        public List<RoomInfo> CurrentRoomList = null;
 
 
         #region Public Methods
@@ -73,10 +79,11 @@ namespace RGYB
                 PhotonNetwork.LeaveRoom();
                 opponentNickName = null;
                 reservedScene = null;
+                IsGotRoomData = false;
             }
         }
 
-        public void CreateRoom(bool isPrivate, string customRoomName = null, string customPassword = null, bool isRandomRole = true, bool masterIsFirstSelect = true)
+        public void CreateRoom(bool isPrivate, string customRoomName = null, string customPassword = null, bool isRandomRole = true, bool masterIsFirstSelect = true, int gameMode = 1)
         {
             CheckAndLeaveRoom();
 
@@ -85,18 +92,29 @@ namespace RGYB
             roomOptions.IsOpen = true;
             roomOptions.MaxPlayers = maxPlayersPerRoom;
             int role = isRandomRole ? UnityEngine.Random.Range(0, 2) : (masterIsFirstSelect ? 1 : 0);
-            roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable() { { "Role", role } };
 
             if (isPrivate)
             {
                 roomName += customRoomName + "_" + customPassword;
                 roomOptions.IsVisible = false;
+                roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable() { { "Role", role } };
             }
             else
             {
-                if (customRoomName != null) roomName += customRoomName;
-                else roomName += "RandomRoom_" + UnityEngine.Random.Range(0, 5000).ToString();
-                roomOptions.IsVisible = true;
+                if (customRoomName != null)
+                {
+                    roomName = customRoomName;
+                    roomOptions.IsVisible = true;
+                    roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable() { { "Role", role }, { "GameMode", gameMode }, { "RandomRole", isRandomRole ? 1 : 0 } };
+                    roomOptions.CustomRoomPropertiesForLobby = new string[] { "Role", "GameMode", "RandomRole" };
+                }
+                else
+                {
+                    roomName += "RandomRoom_" + UnityEngine.Random.Range(0, 5000).ToString();
+                    roomOptions.IsVisible = true;
+                    roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable() { { "Role", role }, { "RandomPool", 1 } };
+                    roomOptions.CustomRoomPropertiesForLobby = new string[] { "RandomPool" };
+                }
             }
 
             PhotonNetwork.CreateRoom(roomName, roomOptions, null);
@@ -107,15 +125,21 @@ namespace RGYB
         {
             CheckAndLeaveRoom();
 
-            PhotonNetwork.JoinRandomRoom();
+            PhotonNetwork.JoinRandomRoom(new ExitGames.Client.Photon.Hashtable() { { "RandomPool", 1 } }, maxPlayersPerRoom);
         }
 
         public void JoinCustomRoom(string customRoomName, string customPassword)
         {
             CheckAndLeaveRoom();
-
-            string roomName = customRoomName + "_" + customPassword;
+            string roomName = customRoomName;
+            if (customPassword.Length != 0) roomName += "_" + customPassword;
             PhotonNetwork.JoinRoom(roomName);
+        }
+
+        public Room GetCurrentRoom()
+        {
+            if (PhotonNetwork.CurrentRoom == null) return null;
+            return PhotonNetwork.CurrentRoom;
         }
 
         public string GetRoomName()
@@ -204,12 +228,15 @@ namespace RGYB
             if (PhotonNetwork.CurrentRoom.PlayerCount == maxPlayersPerRoom && !PhotonNetwork.IsMasterClient)
             {
                 Debug.LogFormat("OnPlayerEnteredRoom IsMasterClient {0}", PhotonNetwork.IsMasterClient); // called before OnPlayerLeftRoom
-                Debug.LogFormat("Loading Game Scene");
                 int role = (int)PhotonNetwork.CurrentRoom.CustomProperties["Role"];
                 reservedScene = "Game_" + ((1 - role) == 1 ? "FirstSelect" : "SecondSelect");
 
                 if (MenuManager.Instance.GetPrevMenu() == Menu.Matching) LoadLevel();
-                else SendNickName(DataManager.Instance.GetNickName());
+                else
+                {
+                    AlertJoinedRoom(DataManager.Instance.GetNickName());
+                    MenuManager.Instance.CustomOnJoinedCustomRoom();
+                }
             }
         }
 
@@ -257,7 +284,6 @@ namespace RGYB
             if (PhotonNetwork.CurrentRoom.PlayerCount == maxPlayersPerRoom && PhotonNetwork.IsMasterClient)
             {
                 Debug.LogFormat("OnPlayerEnteredRoom IsMasterClient {0}", PhotonNetwork.IsMasterClient); // called before OnPlayerLeftRoom
-                Debug.LogFormat("Loading Game Scene");
                 int role = (int)PhotonNetwork.CurrentRoom.CustomProperties["Role"];
                 reservedScene = "Game_" + (role == 1 ? "FirstSelect" : "SecondSelect");
 
@@ -265,24 +291,22 @@ namespace RGYB
                 {
                     LoadLevel();
                 }
-                StartCoroutine(GetNickName());
             }
-        }
-
-        private IEnumerator GetNickName()
-        {
-            while (opponentNickName == null)
-            {
-                yield return wait;
-            }
-            MenuManager.Instance.SetNickName(opponentNickName);
         }
 
         public override void OnPlayerLeftRoom(Player other)
         {
-            if ((GameSequenceType)GameManager.Instance.SequenceIndex == GameSequenceType.Result) return;
-            Debug.LogFormat("OnPlayerLeftRoom() {0}", other.NickName); // seen when other disconnects
-            ExitGame();
+            if (SceneManager.GetActiveScene().name == "MainMenu")
+            {
+                MenuManager.Instance.SetFront(Menu.Custom);
+                MenuManager.Instance.CustomAlertOpponentExit(true);
+            }
+            else
+            {
+                if ((GameSequenceType)GameManager.Instance.SequenceIndex == GameSequenceType.Result) return;
+                Debug.LogFormat("OnPlayerLeftRoom() {0}", other.NickName); // seen when other disconnects
+                ExitGame();
+            }
         }
 
         public bool IsFirstSelectPlayer()
@@ -320,20 +344,30 @@ namespace RGYB
             PhotonNetwork.RaiseEvent(100, eventContent, raiseEventOptions, SendOptions.SendReliable);
         }
 
-        public void SendNickName(string nickName)
+        public void AlertJoinedRoom(string nickName)
         {
-            Debug.LogFormat("Send nickName " + nickName);
+            Debug.LogFormat("AlertJoinedRoom( " + nickName + ")");
             RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
             object[] eventContent = new object[] { nickName };
             PhotonNetwork.RaiseEvent(101, eventContent, raiseEventOptions, SendOptions.SendReliable);
         }
 
-        public void SendAllow()
+        // gameMode : Classic 1, Hardcore 0
+        // p1Role : Random 2, SecondSelect 1, FirstSelect  0
+        public void SendRoomData(string roomName, string p1Name, int gameMode, int p1Role)
         {
-            Debug.LogFormat("Send Allow");
+            Debug.LogFormat("SendRoomData()");
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+            object[] eventContent = new object[] { roomName, p1Name, gameMode, p1Role };
+            PhotonNetwork.RaiseEvent(102, eventContent, raiseEventOptions, SendOptions.SendReliable);
+        }
+
+        public void AlertStartGame()
+        {
+            Debug.LogFormat("AlertStartGame()");
             RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
             object[] eventContent = new object[] { };
-            PhotonNetwork.RaiseEvent(102, eventContent, raiseEventOptions, SendOptions.SendReliable);
+            PhotonNetwork.RaiseEvent(103, eventContent, raiseEventOptions, SendOptions.SendReliable);
         }
 
         public void OnEvent(EventData photonEvent)
@@ -384,16 +418,53 @@ namespace RGYB
             }
             else if (photonEvent.Code == 101)
             {
-                Debug.Log("Get Nickname");
+                Debug.Log("AlertJoinedRoom() received");
                 object[] data = (object[])photonEvent.CustomData;
-                MenuManager.Instance.SetNickName((string)data[0]);
+                MenuManager.Instance.CustomOnPlayerEntered((string)data[0]);
             }
             else if (photonEvent.Code == 102)
             {
-                Debug.Log("Game Start Allowed");
+                Debug.Log("SendRoomData() received");
+                object[] data = (object[])photonEvent.CustomData;
+                MenuManager.Instance.CustomSetWaitRoomData((string)data[0], (string)data[1], (int)data[2], (int)data[3]);
+                IsGotRoomData = true;
+            }
+            else if (photonEvent.Code == 103)
+            {
+                Debug.Log("AlertStartGame() received");
                 LoadLevel();
             }
         }
+
+        public void PullRoomList()
+        {
+            CurrentRoomList = null;
+            List<RoomInfo> currentRoomList = new List<RoomInfo>();
+            RoomPuller roomPoller = gameObject.AddComponent<RoomPuller>();
+            roomPoller.OnGetRoomsInfo
+            (
+                (roomInfos) =>
+                {
+                    // 룸리스트를 받고나서 작업 코드 넣기
+                    for (int i = 0; i < roomInfos.Count; i++)
+                    {
+                        if (roomInfos[i].CustomProperties.ContainsKey("GameMode"))
+                        {
+                            currentRoomList.Add(roomInfos[i]);
+                        }
+                    }
+
+                    Debug.Log($"현재 방 갯수 : {roomInfos.Count}");
+                    Debug.Log($"목록에 뜨는 방 갯수 : {currentRoomList.Count}");
+
+                    // 마지막엔 오브젝트 제거해주기
+                    Destroy(roomPoller);
+
+                    CurrentRoomList = currentRoomList;
+                }
+            );
+        }
+
 
         #endregion
     }

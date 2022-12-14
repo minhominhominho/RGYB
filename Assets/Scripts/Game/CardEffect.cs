@@ -15,13 +15,15 @@ namespace RGYB
         [HideInInspector] public Sprite NoneSprite;
         public Sprite SelectedSprite;
         private SpriteRenderer MyImage;
-
+        private Vector3 origScale;
+        private Vector3 selectedScale = new Vector3(1.2f, 1.2f, 1.2f);
 
         private void Awake()
         {
             MyState = CardState.None;
             MyImage = GetComponent<SpriteRenderer>();
             NoneSprite = MyImage.sprite;
+            origScale = transform.localScale;
         }
 
         public void SetCardState(CardState cardState)
@@ -32,11 +34,13 @@ namespace RGYB
         public void NoneEffect()
         {
             MyImage.sprite = NoneSprite;
+            transform.localScale = origScale;
         }
 
         public void SelectedEffect()
         {
             MyImage.sprite = SelectedSprite;
+            transform.localScale = selectedScale;
         }
 
         private void OnMouseUpAsButton()
